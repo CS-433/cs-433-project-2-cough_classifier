@@ -43,8 +43,8 @@ def create_multi_index(data):
     return data
 
 
-def standardize(df):
-    features = list(df.columns)
-    df[features] = StandardScaler().fit_transform(df[features])
-
+def standardize(df, col_idx_start, col_idx_end):
+    #features = list(df.columns)
+    df.iloc[:, col_idx_start_col_idx_end:col_idx_start_col_idx_end] = StandardScaler().fit_transform(df.iloc[:, col_idx_start:, col_idx_end])
+    
     return df
