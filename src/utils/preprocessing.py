@@ -43,8 +43,20 @@ def create_multi_index(data):
     return data
 
 
-def standardize(df, col_idx_start, col_idx_end):
+def standardize(df, idx_start=0, idx_end=-1):
+    # don't know how to sclice until the last element, so -1 replaced manually
+    if idx_end == -1:
+        idx_end = len(df.columns)
     #features = list(df.columns)
-    df.iloc[:, col_idx_start_col_idx_end:col_idx_start_col_idx_end] = StandardScaler().fit_transform(df.iloc[:, col_idx_start:, col_idx_end])
+    #df[features] = StandardScaler().fit_transform(df[features])
+    df.iloc[:, idx_start:idx_end] = StandardScaler().fit_transform(df.iloc[:, idx_start:idx_end])
+    
+    return df
+
+
+def dummy_code(df, columns):
+    df = pd.get_dummies(df, columns = columns)
+    # drop reference columns for ['Gender', 'Resp_Condition', 'Symptoms']
+    df = df.drop(['Gender_0.5', 'Resp_Condition_0.5', 'Symptoms_0.5'])
     
     return df
