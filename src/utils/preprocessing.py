@@ -57,6 +57,7 @@ def standardize(df, idx_start=0, idx_end=-1):
 def dummy_code(df, columns):
     df = pd.get_dummies(df, columns = columns)
     # drop reference columns for ['Gender', 'Resp_Condition', 'Symptoms']
-    df = df.drop(['Gender_0.5', 'Resp_Condition_0.5', 'Symptoms_0.5'])
+    df = df.drop(['Gender_0.5', 'Resp_Condition_0.5', 'Symptoms_0.5'], axis = 1)
     
     return df
+
