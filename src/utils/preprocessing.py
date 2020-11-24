@@ -44,20 +44,61 @@ def create_multi_index(data):
 
 
 def standardize(df, idx_start=0, idx_end=-1):
-    # don't know how to sclice until the last element, so -1 replaced manually
+    """
+    Standardize columns
+    :param df: dataframe
+    :type path: pandas
+    :param idx_start: start index
+    :type idx_start: int
+    :param idx_end: end index
+    :type idx_end: int
+    :return: dataframe with standardized columns
+    """
+    # -1 for idx_end indicates slicing until the last element, 
+    # so manually replace -1 by the length of the dataframes columns's
     if idx_end == -1:
         idx_end = len(df.columns)
-    #features = list(df.columns)
-    #df[features] = StandardScaler().fit_transform(df[features])
+    # Standardize the specified columns
     df.iloc[:, idx_start:idx_end] = StandardScaler().fit_transform(df.iloc[:, idx_start:idx_end])
     
     return df
 
 
 def dummy_code(df, columns):
+    """
+    Dummy code categorical features
+    :param df: dataframe
+    :type path: pandas
+    :param columns: columns to dummy code
+    :type columns: list of str
+    :return: dataframe with dummy coded columns
+    """
     df = pd.get_dummies(df, columns = columns)
-    # drop reference columns for ['Gender', 'Resp_Condition', 'Symptoms']
+    # drop reference columns for ['Gender', 'Resp_Condition', 'Symptoms'] to avoid multicollinearity
     df = df.drop(['Gender_0.5', 'Resp_Condition_0.5', 'Symptoms_0.5'], axis = 1)
     
     return df
+
+
+# TODO Xavi did the same? Replace by his version
+def train_test(X, y, fraction = 0.8, random_state = 1, segmentation = True):
+    """
+    Split the data set in train and test data
+    """
+    # If there are several instances of the same subject, we don't want it to be in the training and testing set
+    if segmentation == True:
+        X[['Subject', 'Cough']] = X['File_Name'].str.split("_", expand = True)
+        y[['Subject', 'Cough']] = y['File_Name'].str.split("_", expand = True)
+    
+        # index for Subject
+        X = X.set_index(['Subject'])
+        y = y.set_index(['Subject'])
+    
+    train_X = X.loc[X.sample(frac = fraction, random_state=random_state).index.unique()].drop(['File_Name'], axis = 1)
+    test_X = X.drop(train_X.index).drop(['File_Name'], axis = 1)
+    
+    train_y = y.loc[y.sample(frac = fraction, random_state=random_state).index.unique()].drop(['File_Name'], axis = 1)
+    test_y = y.drop(train_y.index).drop(['File_Name'], axis = 1)
+    
+    return train_X, test_X, train_y, test_y
 
