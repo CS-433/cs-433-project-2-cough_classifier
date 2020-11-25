@@ -1,5 +1,6 @@
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+from imblearn.over_sampling import SMOTE
 
 
 def import_data(path, segmentation_type, is_user_features=True):
@@ -23,6 +24,9 @@ def import_data(path, segmentation_type, is_user_features=True):
         df_features.rename(index={'File_Name': 'subject'})
         df_labels.set_index("File_Name")
         df_labels.rename(index={'File_Name': 'subject'})
+        
+        df_features.drop(["File_Name"], axis = 1)
+        df_labels.drop(["File_Name"], axis = 1)
 
     drop_features = ['Expert']
     df_features.drop(drop_features, axis=1, errors='ignore', inplace=True)
@@ -61,7 +65,25 @@ def standardize(df, idx_start=0, idx_end=-1):
     # Standardize the specified columns
     df.iloc[:, idx_start:idx_end] = StandardScaler().fit_transform(df.iloc[:, idx_start:idx_end])
     
-    return df
+    return dfsrc/utils/model/train.py
+
+
+def oversample(X,y):
+    """
+    Apply SMOTE algorithm to balanced imbalanced dataset
+    :param X: feature dataframe
+    :type path: pandas
+    :param y: label dataframe
+    :type columns: pandas
+    :return: features and labels with balanced classes
+    """
+    oversample = SMOTE(random_state=42)
+    X_over, y_over = oversample.fit_resample(X, y)
+    X_over = pd.DataFrame(X_over, columns=X.columns)
+    y_over = pd.DataFrame(y_over, columns=y.columns)
+    
+    return X_over, y_over
+    
 
 
 def dummy_code(df, columns):
@@ -79,26 +101,4 @@ def dummy_code(df, columns):
     
     return df
 
-
-# TODO Xavi did the same? Replace by his version
-def train_test(X, y, fraction = 0.8, random_state = 1, segmentation = True):
-    """
-    Split the data set in train and test data
-    """
-    # If there are several instances of the same subject, we don't want it to be in the training and testing set
-    if segmentation == True:
-        X[['Subject', 'Cough']] = X['File_Name'].str.split("_", expand = True)
-        y[['Subject', 'Cough']] = y['File_Name'].str.split("_", expand = True)
-    
-        # index for Subject
-        X = X.set_index(['Subject'])
-        y = y.set_index(['Subject'])
-    
-    train_X = X.loc[X.sample(frac = fraction, random_state=random_state).index.unique()].drop(['File_Name'], axis = 1)
-    test_X = X.drop(train_X.index).drop(['File_Name'], axis = 1)
-    
-    train_y = y.loc[y.sample(frac = fraction, random_state=random_state).index.unique()].drop(['File_Name'], axis = 1)
-    test_y = y.drop(train_y.index).drop(['File_Name'], axis = 1)
-    
-    return train_X, test_X, train_y, test_y
 

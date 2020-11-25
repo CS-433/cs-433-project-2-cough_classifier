@@ -2,6 +2,52 @@ import numpy as np
 import pandas as pd
 
 
+
+# TODO Xavi did the same? Replace by his version
+def train_test(X, y, fraction = 0.8, random_state = 1, segmentation = True):
+    """
+    Split the data set in train and test data
+    """
+    # If there are several instances of the same subject, we don't want it to be in the training and testing set
+    if segmentation == True:
+        X[['Subject', 'Cough']] = X['File_Name'].str.split("_", expand = True)
+        y[['Subject', 'Cough']] = y['File_Name'].str.split("_", expand = True)
+    
+        # index for Subject
+        X = X.set_index(['Subject'])
+        y = y.set_index(['Subject'])
+    
+    train_X = X.loc[X.sample(frac = fraction, random_state=random_state).index.unique()].drop(['File_Name'], axis = 1)
+    test_X = X.drop(train_X.index).drop(['File_Name'], axis = 1)
+    
+    train_y = y.loc[y.sample(frac = fraction, random_state=random_state).index.unique()].drop(['File_Name'], axis = 1)
+    test_y = y.drop(train_y.index).drop(['File_Name'], axis = 1)
+    
+    return train_X, test_X, train_y, test_y
+
+
+def train_test_split(data: pd.DataFrame, labels: pd.DataFrame):
+    """
+    Split the data set in train and test data
+    """
+    unique_subjects = np.array(data.index.get_level_values('subject').unique())
+    N = len(unique_subjects)
+    
+    indices = np.random.permutation(N)
+    
+    # split the data accordingly into training and validation
+    val_subjects = unique_subjects[indices]
+    tr_mask = np.ones(N, bool)
+    tr_mask[indices] = False
+    tr_subjects = unique_subjects[tr_mask]
+
+    x_tr = data.loc[tr_subjects]
+    y_tr = labels.loc[tr_subjects]
+    x_val = data.loc[val_subjects]
+    y_val = labels.loc[val_subjects]
+
+    return x_tr, y_tr, x_val, y_val
+
 def cross_validation_iter(data: pd.DataFrame, labels: pd.DataFrame, k: int):
     """
     Compute cross validation for a single iteration.
