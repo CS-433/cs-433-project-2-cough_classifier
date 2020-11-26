@@ -28,12 +28,10 @@ def import_data(path, segmentation_type, is_user_features=True):
         df_features.drop(["File_Name"], axis = 1)
         df_labels.drop(["File_Name"], axis = 1)
 
-    drop_features = ['Expert']
-    df_features.drop(drop_features, axis=1, errors='ignore', inplace=True)
+    df_features.drop(['Expert'], axis=1, errors='ignore', inplace=True)
 
     if not is_user_features:
-        user_features = ['Age', 'Gender', 'Resp_Condition', 'Symptoms']
-        df_features.drop(user_features, axis=1, errors='ignore', inplace=True)
+        df_features.drop(FEATURES['METADATA'], axis=1, errors='ignore', inplace=True)
 
     return df_features, df_labels
 
