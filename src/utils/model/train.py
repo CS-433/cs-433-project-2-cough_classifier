@@ -2,30 +2,6 @@ import numpy as np
 import pandas as pd
 
 
-
-# TODO Xavi did the same? Replace by his version
-def train_test(X, y, fraction = 0.8, random_state = 1, segmentation = True):
-    """
-    Split the data set in train and test data
-    """
-    # If there are several instances of the same subject, we don't want it to be in the training and testing set
-    if segmentation == True:
-        X[['Subject', 'Cough']] = X['File_Name'].str.split("_", expand = True)
-        y[['Subject', 'Cough']] = y['File_Name'].str.split("_", expand = True)
-    
-        # index for subject
-        X = X.set_index(['Subject'])
-        y = y.set_index(['Subject'])
-    
-    train_X = X.loc[X.sample(frac = fraction, random_state=random_state).index.unique()].drop(['File_Name'], axis = 1)
-    test_X = X.drop(train_X.index).drop(['File_Name'], axis = 1)
-    
-    train_y = y.loc[y.sample(frac = fraction, random_state=random_state).index.unique()].drop(['File_Name'], axis = 1)
-    test_y = y.drop(train_y.index).drop(['File_Name'], axis = 1)
-    
-    return train_X, test_X, train_y, test_y
-
-
 def train_test_split(X: pd.DataFrame, y: pd.DataFrame, random_state = 1, fraction = 0.7):
     """
     Split the data set in train and test data
@@ -77,4 +53,4 @@ def cross_validation(data, labels, k, model, metric):
 
         metric_list.append(metric(y_val, y_pred))
 
-    return metric_list
+    return np.mean(metric_list)
