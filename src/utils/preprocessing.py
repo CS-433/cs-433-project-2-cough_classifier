@@ -3,6 +3,7 @@ from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
 
 
+
 def import_data(path, segmentation_type, is_user_features=True):
     """
     Import data
@@ -25,8 +26,8 @@ def import_data(path, segmentation_type, is_user_features=True):
         df_labels.set_index("File_Name")
         df_labels.rename(index={'File_Name': 'subject'})
         
-        df_features.drop(["File_Name"], axis = 1)
-        df_labels.drop(["File_Name"], axis = 1)
+        df_features = df_features.drop(["File_Name"], axis = 1)
+        df_labels = df_labels.drop(["File_Name"], axis = 1)
 
     df_features.drop(['Expert'], axis=1, errors='ignore', inplace=True)
 
@@ -63,7 +64,7 @@ def standardize(df, idx_start=0, idx_end=-1):
     # Standardize the specified columns
     df.iloc[:, idx_start:idx_end] = StandardScaler().fit_transform(df.iloc[:, idx_start:idx_end])
     
-    return dfsrc/utils/model/train.py
+    return df
 
 
 def oversample(X,y):
@@ -77,8 +78,8 @@ def oversample(X,y):
     """
     oversample = SMOTE(random_state=42)
     X_over, y_over = oversample.fit_resample(X, y)
-    X_over = pd.DataFrame(X_over, columns=X.columns)
-    y_over = pd.DataFrame(y_over, columns=y.columns)
+    #X_over = pd.DataFrame(X_over, columns=X.columns)
+    #y_over = pd.DataFrame(y_over, columns=y.columns)
     
     return X_over, y_over
     
@@ -100,3 +101,12 @@ def dummy_code(df, columns):
     return df
 
 
+def remove_correlated_features(df, threshold, print_features = False):
+    cor_matrix = df.corr().abs()
+    upper_tri = cor_matrix.where(np.triu(np.ones(cor_matrix.shape),k=1).astype(np.bool))
+    to_drop = [column for column in upper_tri.columns if any(upper_tri[column] > threshold)]
+    if print_features == True:
+        print("Correlated Features: ", to_drop)
+    df1 = df.drop(to_drop, axis=1)
+    
+    return df1

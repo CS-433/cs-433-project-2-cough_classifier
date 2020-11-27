@@ -1,11 +1,16 @@
 # Define a function that automatically plots the AUC curve for a given classifier
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import plot_roc_curve, auc
+
 
 def roc_w_cross_val(X, y, classifier):
     
     cv = StratifiedKFold(n_splits=6)
     
     X = X.to_numpy()
-    y = y['Label'].to_numpy()
+    y = y.to_numpy()
 
 
     tprs = []

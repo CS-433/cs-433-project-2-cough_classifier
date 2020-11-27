@@ -13,7 +13,7 @@ def train_test(X, y, fraction = 0.8, random_state = 1, segmentation = True):
         X[['Subject', 'Cough']] = X['File_Name'].str.split("_", expand = True)
         y[['Subject', 'Cough']] = y['File_Name'].str.split("_", expand = True)
     
-        # index for Subject
+        # index for subject
         X = X.set_index(['Subject'])
         y = y.set_index(['Subject'])
     
@@ -26,27 +26,20 @@ def train_test(X, y, fraction = 0.8, random_state = 1, segmentation = True):
     return train_X, test_X, train_y, test_y
 
 
-def train_test_split(data: pd.DataFrame, labels: pd.DataFrame):
+def train_test_split(X: pd.DataFrame, y: pd.DataFrame, random_state = 1, fraction = 0.7):
     """
     Split the data set in train and test data
     """
-    unique_subjects = np.array(data.index.get_level_values('subject').unique())
-    N = len(unique_subjects)
-    
-    indices = np.random.permutation(N)
-    
-    # split the data accordingly into training and validation
-    val_subjects = unique_subjects[indices]
-    tr_mask = np.ones(N, bool)
-    tr_mask[indices] = False
-    tr_subjects = unique_subjects[tr_mask]
+    X_tr = X.loc[X.sample(frac = fraction, random_state=random_state).index.unique()]#.drop(['File_Name'], axis = 1)
+    X_te = X.drop(X_tr.index)#.drop(['File_Name'], axis = 1)
 
-    x_tr = data.loc[tr_subjects]
-    y_tr = labels.loc[tr_subjects]
-    x_val = data.loc[val_subjects]
-    y_val = labels.loc[val_subjects]
-
-    return x_tr, y_tr, x_val, y_val
+    
+    y_tr = y.loc[y.sample(frac = fraction, random_state=random_state).index.unique()]#.drop(['File_Name'], axis = 1)
+    y_te = y.drop(y_tr.index)#.drop(['File_Name'], axis = 1)
+    y_te = y_te.Label
+    y_tr = y_tr.Label
+    
+    return X_tr, y_tr, X_te, y_te
 
 def cross_validation_iter(data: pd.DataFrame, labels: pd.DataFrame, k: int):
     """
