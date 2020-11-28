@@ -10,7 +10,6 @@ from sklearn.model_selection import train_test_split, GroupShuffleSplit
 import torch
 import torch.nn as nn
 import torch.optim as optim
-
 from src.models.model import BinaryClassification
 from src.utils.utils import binary_acc, area_under_the_curve, get_shap_values
 from src.utils.get_data import import_data, get_data_loader
