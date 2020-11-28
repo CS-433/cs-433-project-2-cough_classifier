@@ -12,3 +12,5 @@ FEATURES = {
     'ADDITIONAL': ['Zero_Crossing_Rate', 'RMS_Power', 'Dominant_Freq', 'Crest_Factor', 'Cough_Length', 'SNR'],
     'METADATA': ['Age', 'Gender', 'Resp_Condition', 'Symptoms'],
 }
+
+SEED = 42
