@@ -3,6 +3,25 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
 
+def standard_preprocessing(samples, labels, do_standardize=True,
+    do_smote=True, do_dummy_coding=True,
+    categorical_features = ['Gender', 'Resp_Condition', 'Symptoms']):
+
+    if do_standardize:
+        # standardize all non categorical features
+        samples = standardize(samples, 0, -len(categorical_features))
+
+    if do_dummy_coding:
+        # dummy coding
+        samples = dummy_code(samples, columns=categorical_features)
+
+    if do_smote:
+        # smote
+        # TODO smote might change dummy coding, i.e., make it continous
+        samples, labels = oversample(samples, labels)
+
+    return samples, labels
+
 
 def standardize(data, idx_start=0, idx_end=None):
     """
@@ -55,7 +74,7 @@ def dummy_code(df, columns):
 
     return df
 
-
+# TODO remove from here, already in faeture engineering
 def remove_correlated_features(df, threshold, print_features=False):
     cor_matrix = df.corr().abs()
     upper_tri = cor_matrix.where(np.triu(np.ones(cor_matrix.shape), k=1).astype(np.bool))

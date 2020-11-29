@@ -7,6 +7,21 @@ from sklearn.feature_selection import RFE
 from sklearn.pipeline import Pipeline
 from matplotlib import pyplot
 from src.utils.model_helpers import roc_w_cross_val
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LogisticRegression
+
+def feature_engineering(samples, labels):
+    # remove unnecessary features
+    samples = remove_correlated_features(samples, 0.95)
+    print("\n"*10)
+    # recursive feature elimination
+    #auc_mean, ranks = train_optimal_features_model(samples, labels.Label,
+    #    LogisticRegression(), start_idx = samples.shape[1] - 3)
+
+    # TODO: PolynomialFeatures
+
+    return samples, labels
+
 
 # get a list of models to evaluate
 def get_models(model, X, start_idx = 1):
@@ -22,6 +37,15 @@ def evaluate_model(model, X, y):
     scores = cross_val_score(model, X, y, scoring='roc_auc', cv=cv, n_jobs=-1, error_score='raise')
     return scores
 
+def remove_correlated_features(df, threshold, print_features=False):
+    cor_matrix = df.corr().abs()
+    upper_tri = cor_matrix.where(np.triu(np.ones(cor_matrix.shape), k=1).astype(np.bool))
+    to_drop = [column for column in upper_tri.columns if np.any(upper_tri[column] > threshold)]
+    if print_features:
+        print("Correlated Features: ", to_drop)
+    df1 = df.drop(to_drop, axis=1)
+
+    return df1
 
 def RFE_(model, X, y, start_idx = 1, plot=False):
     # get the models to evaluate
@@ -34,9 +58,9 @@ def RFE_(model, X, y, start_idx = 1, plot=False):
         names.append(name)
         mean_score.append(np.mean(scores))
         std_score.append(np.std(scores))
-        if int(name) % 10 == 0: 
+        if int(name) % 10 == 0:
             print('>%s %.3f (%.3f)' % (name, np.mean(scores), np.std(scores)))
-    # write results in pandas df 
+    # write results in pandas df
     results_df = pd.DataFrame(data={"# Features": names, "AUC (mean)": mean_score, "AUC (std)": std_score})
 
     if plot:

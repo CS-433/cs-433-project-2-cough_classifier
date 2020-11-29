@@ -107,7 +107,7 @@ def homemade_all_models(X, y, k=4):
     return pd.DataFrame(data=d)
 
 
-def roc_w_cross_val(X, y, classifier):
+def roc_w_cross_val(X, y, classifier, plot=False):
     cv = StratifiedKFold(n_splits=6)
 
     X = X.to_numpy()
@@ -149,7 +149,7 @@ def roc_w_cross_val(X, y, classifier):
            title="Receiver operating characteristic example")
     # ax.legend(loc="lower right")
     ax.legend(bbox_to_anchor=(1, 0), loc="lower left")
-       
+    
     if plot == False:
         plt.close()
     else:
