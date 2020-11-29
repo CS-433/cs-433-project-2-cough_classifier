@@ -149,6 +149,10 @@ def roc_w_cross_val(X, y, classifier):
            title="Receiver operating characteristic example")
     # ax.legend(loc="lower right")
     ax.legend(bbox_to_anchor=(1, 0), loc="lower left")
-    plt.show()
+       
+    if plot == False:
+        plt.close()
+    else:
+        plt.show()
 
     return mean_auc

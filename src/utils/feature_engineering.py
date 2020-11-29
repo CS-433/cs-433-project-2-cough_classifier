@@ -1,26 +1,20 @@
-# Do recursive feature elimination
+import pandas as pd
+import numpy as np
 from sklearn.feature_selection import RFE
-# explore the number of selected features for RFE
-
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.feature_selection import RFE
 from sklearn.pipeline import Pipeline
 from matplotlib import pyplot
-import pandas as pd
-import numpy as np
-
 from src.utils.model_helpers import roc_w_cross_val
 
-
 # get a list of models to evaluate
-def get_models(model, X):
+def get_models(model, X, start_idx = 1):
     models = dict()
-    for i in range(1, X.shape[1]):
+    for i in range(start_idx, X.shape[1]):
         rfe = RFE(estimator=model, n_features_to_select=i)
         models[str(i)] = Pipeline(steps=[('s', rfe), ('m', model)])
     return models
-
 
 # evaluate a give model using cross-validation
 def evaluate_model(model, X, y):
@@ -29,9 +23,9 @@ def evaluate_model(model, X, y):
     return scores
 
 
-def RFE_(model, X, y, plot=True):
+def RFE_(model, X, y, start_idx = 1, plot=False):
     # get the models to evaluate
-    models = get_models(model, X)
+    models = get_models(model, X, start_idx)
     # evaluate the models and store results
     results, names, mean_score, std_score = list(), list(), list(), list()
     for name, model_ in models.items():
@@ -40,7 +34,8 @@ def RFE_(model, X, y, plot=True):
         names.append(name)
         mean_score.append(np.mean(scores))
         std_score.append(np.std(scores))
-        print('>%s %.3f (%.3f)' % (name, np.mean(scores), np.std(scores)))
+        if int(name) % 10 == 0: 
+            print('>%s %.3f (%.3f)' % (name, np.mean(scores), np.std(scores)))
     # write results in pandas df 
     results_df = pd.DataFrame(data={"# Features": names, "AUC (mean)": mean_score, "AUC (std)": std_score})
 
@@ -52,13 +47,13 @@ def RFE_(model, X, y, plot=True):
     return results_df
 
 
-def train_optimal_features_model(X, y, model):
+def train_optimal_features_model(X, y, model, start_idx = 1):
     # get optimal amount of features
-    RFE_results = RFE_(model, X, y)
+    RFE_results = RFE_(model, X, y, start_idx)
     n_features = RFE_results["# Features"].iloc[RFE_results["AUC (mean)"].argmax()]
     selector = RFE(model, n_features_to_select=int(n_features), step=1)
     selector = selector.fit(X, y)
-
+    ranks = selector.ranking_
     # Only keep optimal features
     X_opt = X[X.columns[selector.ranking_ == 1]]
 
@@ -66,3 +61,15 @@ def train_optimal_features_model(X, y, model):
     mean_AUC = roc_w_cross_val(X_opt, y, model)
 
     return mean_AUC
+
+def get_optimal_features_model(X, y, model, start_idx = 1):
+    # get optimal amount of features
+    RFE_results = RFE_(model, X, y, start_idx)
+    n_features = RFE_results["# Features"].iloc[RFE_results["AUC (mean)"].argmax()]
+    selector = RFE(model, n_features_to_select=int(n_features), step=1)
+    selector = selector.fit(X, y)
+    ranks = selector.ranking_
+    # Only keep optimal features
+    X_opt = X[X.columns[selector.ranking_ == 1]]
+
+    return X_opt
