@@ -39,11 +39,10 @@ def import_data(path, segmentation_type, is_user_features=True, return_type='pd'
         df_features = create_multi_index(df_features)
         df_labels = create_multi_index(df_labels)
     else:
-        df_features.set_index("File_Name")
-        df_features.rename(index={'File_Name': 'subject'})
-        df_labels.set_index("File_Name")
-        df_labels.rename(index={'File_Name': 'subject'})
-
+        df_features["subject"] = df_features["File_Name"]
+        df_features.set_index("subject", inplace=True)
+        df_labels["subject"] = df_labels["File_Name"]
+        df_labels.set_index("subject", inplace=True)
         df_features = df_features.drop(["File_Name"], axis=1)
         df_labels = df_labels.drop(["File_Name"], axis=1)
 

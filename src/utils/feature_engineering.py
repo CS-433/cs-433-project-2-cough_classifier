@@ -10,12 +10,13 @@ from src.utils.model_helpers import roc_w_cross_val
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LogisticRegression
 
+
 def feature_engineering(samples, labels):
     # remove unnecessary features
     samples = remove_correlated_features(samples, 0.95)
-    print("\n"*10)
+    print("\n" * 10)
     # recursive feature elimination
-    #auc_mean, ranks = train_optimal_features_model(samples, labels.Label,
+    # auc_mean, ranks = train_optimal_features_model(samples, labels.Label,
     #    LogisticRegression(), start_idx = samples.shape[1] - 3)
 
     # TODO: PolynomialFeatures
@@ -24,18 +25,20 @@ def feature_engineering(samples, labels):
 
 
 # get a list of models to evaluate
-def get_models(model, X, start_idx = 1):
+def get_models(model, X, start_idx=1):
     models = dict()
     for i in range(start_idx, X.shape[1]):
         rfe = RFE(estimator=model, n_features_to_select=i)
         models[str(i)] = Pipeline(steps=[('s', rfe), ('m', model)])
     return models
 
+
 # evaluate a give model using cross-validation
 def evaluate_model(model, X, y):
     cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=3, random_state=1)
     scores = cross_val_score(model, X, y, scoring='roc_auc', cv=cv, n_jobs=-1, error_score='raise')
     return scores
+
 
 def remove_correlated_features(df, threshold, print_features=False):
     cor_matrix = df.corr().abs()
@@ -47,7 +50,8 @@ def remove_correlated_features(df, threshold, print_features=False):
 
     return df1
 
-def RFE_(model, X, y, start_idx = 1, plot=False):
+
+def RFE_(model, X, y, start_idx=1, plot=False):
     # get the models to evaluate
     models = get_models(model, X, start_idx)
     # evaluate the models and store results
@@ -71,7 +75,7 @@ def RFE_(model, X, y, start_idx = 1, plot=False):
     return results_df
 
 
-def train_optimal_features_model(X, y, model, start_idx = 1):
+def train_optimal_features_model(X, y, model, start_idx=1):
     # get optimal amount of features
     RFE_results = RFE_(model, X, y, start_idx)
     n_features = RFE_results["# Features"].iloc[RFE_results["AUC (mean)"].argmax()]
@@ -86,7 +90,8 @@ def train_optimal_features_model(X, y, model, start_idx = 1):
 
     return mean_AUC
 
-def get_optimal_features_model(X, y, model, start_idx = 1):
+
+def get_optimal_features_model(X, y, model, start_idx=1):
     # get optimal amount of features
     RFE_results = RFE_(model, X, y, start_idx)
     n_features = RFE_results["# Features"].iloc[RFE_results["AUC (mean)"].argmax()]
