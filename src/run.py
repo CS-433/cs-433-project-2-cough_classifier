@@ -40,8 +40,8 @@ def train_model(X_train, y_train, model="binary", criterion="BCE",
         y_train (np.array): training labels
         model (string): type of model; currently implemented: ["binary"]
         criterion (string): loss function; currently implemented: ["BCE"]
-        optimizer (string): optimizer; currently impelmented: ["Adam"]
-        smote (bool): whether to performe SMOTE class equalization
+        optimizer (string): optimizer; currently implemented: ["Adam"]
+        smote (bool): whether to perform SMOTE class equalization
         activation_function (string): which activation function; currently
                                             implemented: ["relu"]
         batch_size (int): size of training batches
