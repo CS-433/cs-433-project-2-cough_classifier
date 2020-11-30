@@ -131,3 +131,7 @@ dmypy.json
 .idea/
 *.pt
 *.csv
+audio_data/
+wav_data/
+checkpoints/
+logs/

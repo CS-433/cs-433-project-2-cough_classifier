@@ -1,14 +1,11 @@
 import pandas as pd
 import numpy as np
-from sklearn.feature_selection import RFE
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.feature_selection import RFE
 from sklearn.pipeline import Pipeline
 from matplotlib import pyplot
 from src.utils.model_helpers import roc_w_cross_val
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.linear_model import LogisticRegression
 
 
 def feature_engineering(samples, labels):
@@ -63,7 +60,7 @@ def RFE_(model, X, y, start_idx=1, plot=False):
         mean_score.append(np.mean(scores))
         std_score.append(np.std(scores))
         if int(name) % 10 == 0:
-            print('>%s %.3f (%.3f)' % (name, np.mean(scores), np.std(scores)))
+            print('>%s %.3f (%.3f)' % (name, np.mean(scores).dtype(float), np.std(scores).dtype(float)))
     # write results in pandas df
     results_df = pd.DataFrame(data={"# Features": names, "AUC (mean)": mean_score, "AUC (std)": std_score})
 
