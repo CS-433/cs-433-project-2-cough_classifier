@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import GroupShuffleSplit
+
 from sklearn.metrics import plot_roc_curve, auc, roc_auc_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
@@ -67,19 +69,19 @@ def cross_validation(data, labels, k, model, metric):
     return np.mean(metric_list)
 
 
-def AUC_all_models(X, y, k=4):
-    models = ["LogisticRegression", "SVM", "Lda", "KNN", "GaussianNB", "DecisionTree", "RandomForest",
+def AUC_all_models(X, y, k=4, oversampling=True):
+    models = ["LogisticRegression", "SVM", "LDA", "KNN", "GaussianNB", "DecisionTree", "RandomForest",
               "GradientBoosting"]
 
-    m1 = roc_w_cross_val(X, y, LogisticRegression())
-    m2 = roc_w_cross_val(X, y, SVC(kernel='linear'))
-    m3 = roc_w_cross_val(X, y, Lda())
-    m4 = roc_w_cross_val(X, y, KNeighborsClassifier(n_neighbors=16))
-    m5 = roc_w_cross_val(X, y, GaussianNB())
-    m6 = roc_w_cross_val(X, y, DecisionTreeClassifier(random_state=0))
-    m7 = roc_w_cross_val(X, y, RandomForestClassifier(max_depth=7, random_state=0))
-    m8 = roc_w_cross_val(X, y, GradientBoostingClassifier(random_state=0))
-
+    m1 = cross_val_w_oversampling(X, y, LogisticRegression(), oversampling=oversampling)
+    m2 = cross_val_w_oversampling(X, y, SVC(kernel='linear'), oversampling=oversampling)
+    m3 = cross_val_w_oversampling(X, y, Lda(), oversampling=oversampling)
+    m4 = cross_val_w_oversampling(X, y, KNeighborsClassifier(n_neighbors=16), oversampling=oversampling)
+    m5 = cross_val_w_oversampling(X, y, GaussianNB(), oversampling=oversampling)
+    m6 = cross_val_w_oversampling(X, y, DecisionTreeClassifier(random_state=0), oversampling=oversampling)
+    m7 = cross_val_w_oversampling(X, y, RandomForestClassifier(max_depth=7, random_state=0), oversampling=oversampling)
+    m8 = cross_val_w_oversampling(X, y, GradientBoostingClassifier(random_state=0), oversampling=oversampling)
+    
     results = [m1, m2, m3, m4, m5, m6, m7, m8]
 
     d = {'Models': models, 'AUC (mean)': results}
@@ -87,8 +89,32 @@ def AUC_all_models(X, y, k=4):
     return pd.DataFrame(data=d)
 
 
+def cross_val_w_oversampling(X, y, model, oversampling=True, metric=roc_auc_score):
+
+    groups = X.index
+    gss = GroupShuffleSplit(n_splits=3, train_size=.7, random_state=42)
+    gss.get_n_splits()
+    metric_list = list()
+
+    for train_idx, test_idx in gss.split(X, y, groups):
+        X_tr = X.iloc[train_idx]
+        y_tr = y.iloc[train_idx]
+        X_te = X.iloc[test_idx]
+        y_te = y.iloc[test_idx]
+   
+        if oversampling:
+            X_tr, y_tr = oversample(X_tr, y_tr)
+            #X_te, y_te = oversample(X_te, y_te)
+              
+        k_fit = model.fit(X_tr, y_tr)
+        y_pred = k_fit.predict(X_te)
+        metric_list.append(metric(y_te, y_pred))
+    
+    return np.mean(metric_list)
+
+
 def homemade_all_models(X, y, k=4):
-    models = ["LogisticRegression", "SVM", "Lda", "KNN", "GaussianNB", "DecisionTree", "RandomForest",
+    models = ["LogisticRegression", "SVM", "LDA", "KNN", "GaussianNB", "DecisionTree", "RandomForest",
               "GradientBoosting"]
 
     m1 = cross_validation(X, y, k, LogisticRegression(), metric=roc_auc_score)
@@ -108,6 +134,8 @@ def homemade_all_models(X, y, k=4):
 
 
 def roc_w_cross_val(X, y, classifier, plot=False):
+    
+    
     cv = StratifiedKFold(n_splits=6)
 
     X = X.to_numpy()
