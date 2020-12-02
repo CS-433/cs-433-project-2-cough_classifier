@@ -11,10 +11,6 @@ from src.utils.model_helpers import roc_w_cross_val
 def feature_engineering(samples, labels):
     # remove unnecessary features
     samples = remove_correlated_features(samples, 0.95)
-<<<<<<< Updated upstream
-    print("\n" * 10)
-=======
->>>>>>> Stashed changes
     # recursive feature elimination
     # auc_mean, ranks = train_optimal_features_model(samples, labels.Label,
     #    LogisticRegression(), start_idx = samples.shape[1] - 3)
