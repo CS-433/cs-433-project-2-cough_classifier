@@ -46,7 +46,7 @@ def import_data(path, segmentation_type, is_user_features=True, return_type='pd'
         df_features = df_features.drop(["File_Name"], axis=1)
         df_labels = df_labels.drop(["File_Name"], axis=1)
 
-    df_features.drop(['Expert'], axis=1, errors='ignore', inplace=True)
+    #df_features.drop(['Expert'], axis=1, errors='ignore', inplace=True)
 
     if not is_user_features:
         df_features.drop(FEATURES['METADATA'], axis=1, errors='ignore', inplace=True)
@@ -67,6 +67,21 @@ def create_multi_index(data):
 
     return data
 
+
+def split_experts(X, y):
+    
+    merged = X.merge(y, left_index=True, right_index = True)
+    
+    X_exp_1 = merged[merged['Expert'] == 1].iloc[:,:-1]
+    y_exp_1 = merged[merged['Expert'] == 1].iloc[:,-1]
+    
+    X_exp_2 = merged[merged['Expert'] == 2].iloc[:,:-1]
+    y_exp_2 = merged[merged['Expert'] == 2].iloc[:,-1]
+    
+    X_exp_3 = merged[merged['Expert'] == 3].iloc[:,:-1] 
+    y_exp_3 = merged[merged['Expert'] == 3].iloc[:,-1]
+
+    return X_exp_1, y_exp_1, X_exp_2, y_exp_2, X_exp_3, y_exp_3
 
 class CoughDataset(Dataset):
     """
