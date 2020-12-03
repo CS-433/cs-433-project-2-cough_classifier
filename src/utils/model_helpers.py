@@ -14,6 +14,8 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
+from preprocessing import oversample
+
 
 def train_test_split(X: pd.DataFrame, y: pd.DataFrame, random_state=42, fraction=0.7):
     """
@@ -81,7 +83,7 @@ def AUC_all_models(X, y, k=4, oversampling=True):
     m6 = cross_val_w_oversampling(X, y, DecisionTreeClassifier(random_state=0), oversampling=oversampling)
     m7 = cross_val_w_oversampling(X, y, RandomForestClassifier(max_depth=7, random_state=0), oversampling=oversampling)
     m8 = cross_val_w_oversampling(X, y, GradientBoostingClassifier(random_state=0), oversampling=oversampling)
-    
+
     results = [m1, m2, m3, m4, m5, m6, m7, m8]
 
     d = {'Models': models, 'AUC (mean)': results}
@@ -89,10 +91,9 @@ def AUC_all_models(X, y, k=4, oversampling=True):
     return pd.DataFrame(data=d)
 
 
-def cross_val_w_oversampling(X, y, model, oversampling=True, metric=roc_auc_score):
-
+def cross_val_w_oversampling(X, y, k, model, oversampling=True, metric=roc_auc_score):
     groups = X.index
-    gss = GroupShuffleSplit(n_splits=3, train_size=.7, random_state=42)
+    gss = GroupShuffleSplit(n_splits=k, train_size=.7, random_state=42)
     gss.get_n_splits()
     metric_list = list()
 
@@ -101,15 +102,15 @@ def cross_val_w_oversampling(X, y, model, oversampling=True, metric=roc_auc_scor
         y_tr = y.iloc[train_idx]
         X_te = X.iloc[test_idx]
         y_te = y.iloc[test_idx]
-   
+
         if oversampling:
             X_tr, y_tr = oversample(X_tr, y_tr)
-            #X_te, y_te = oversample(X_te, y_te)
-              
+            # X_te, y_te = oversample(X_te, y_te)
+
         k_fit = model.fit(X_tr, y_tr)
         y_pred = k_fit.predict(X_te)
         metric_list.append(metric(y_te, y_pred))
-    
+
     return np.mean(metric_list)
 
 
@@ -134,8 +135,6 @@ def homemade_all_models(X, y, k=4):
 
 
 def roc_w_cross_val(X, y, classifier, plot=False):
-    
-    
     cv = StratifiedKFold(n_splits=6)
 
     X = X.to_numpy()
@@ -177,7 +176,7 @@ def roc_w_cross_val(X, y, classifier, plot=False):
            title="Receiver operating characteristic example")
     # ax.legend(loc="lower right")
     ax.legend(bbox_to_anchor=(1, 0), loc="lower left")
-    
+
     if plot == False:
         plt.close()
     else:
