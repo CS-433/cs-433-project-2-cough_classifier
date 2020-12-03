@@ -17,7 +17,7 @@ SEED = 42
 
 # GRID SEARCH PARAMETERS - STANDARD MODELS
 
-KNN_PARAMS = {'n_neighbors': list(range(3, 12)), 'oversampling': [True, False]}
+KNN_PARAMS = {'n_neighbors': list(range(1, 16)), 'oversampling': [True, False]}
 LOGISTIC_PARAMS = {'oversampling': [True, False]}
 LDA_PARAMS = {'oversampling': [True, False]}
 SVC_PARAMS = {'kernel': 'linear', 'gamma': [0.1, 0.01], 'oversampling': [True, False]}
