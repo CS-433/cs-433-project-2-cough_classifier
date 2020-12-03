@@ -1,4 +1,6 @@
 # Define a function that automatically plots the AUC curve for a given classifier
+from collections import defaultdict
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -91,11 +93,13 @@ def AUC_all_models(X, y, k=4, oversampling=True):
     return pd.DataFrame(data=d)
 
 
-def cross_val_w_oversampling(X, y, k, model, oversampling=True, metric=roc_auc_score):
+def cross_val_w_oversampling(X, y, k, model, oversampling=True, metrics=[roc_auc_score]):
     groups = X.index
     gss = GroupShuffleSplit(n_splits=k, train_size=.7, random_state=42)
     gss.get_n_splits()
-    metric_list = list()
+
+    metric_dict = defaultdict(list)
+    return_dict = defaultdict(float)
 
     for train_idx, test_idx in gss.split(X, y, groups):
         X_tr = X.iloc[train_idx]
@@ -109,9 +113,13 @@ def cross_val_w_oversampling(X, y, k, model, oversampling=True, metric=roc_auc_s
 
         k_fit = model.fit(X_tr, y_tr)
         y_pred = k_fit.predict(X_te)
-        metric_list.append(metric(y_te, y_pred))
+        for metric in metrics:
+            metric_dict[metric.__name__].append(metric(y_te, y_pred))
 
-    return np.mean(metric_list)
+    for metric in metrics:
+        return_dict[metric.__name__] = float(np.mean(metric_dict[metric.__name__]))
+
+    return return_dict
 
 
 def homemade_all_models(X, y, k=4):

@@ -17,47 +17,54 @@ from sklearn.ensemble import GradientBoostingClassifier
 from src.utils.model_helpers import cross_val_w_oversampling
 
 
-def hyperparameter_tuning_cv(model, data, labels, cv_k, params, metric) -> pd.DataFrame:
+def hyperparameter_tuning_cv(model, data, labels, cv_k, params, metrics) -> pd.DataFrame:
+    implemented_models = (
+        'knn', 'logistic', 'lda', 'svc', 'naive_bayes', 'decision_tree', 'random_forest', 'gradient_boosting')
+    assert model in implemented_models, "model does not exist"
+
     d = defaultdict(list)
     param_grid = ParameterGrid(params)
     for param in param_grid:
         for key, value in param.items():
             d[key].append(value)
-        score = None
+        scores_dict = None
+
         if model == 'knn':
-            score = cross_val_w_oversampling(data, labels, k=cv_k,
-                                             model=KNeighborsClassifier(n_neighbors=param["n_neighbors"]),
-                                             oversampling=param['oversampling'], metric=metric)
+            scores_dict = cross_val_w_oversampling(data, labels, k=cv_k,
+                                                   model=KNeighborsClassifier(n_neighbors=param["n_neighbors"]),
+                                                   oversampling=param['oversampling'], metrics=metrics)
         if model == 'logistic':
-            score = cross_val_w_oversampling(data, labels, k=cv_k, model=LogisticRegression(),
-                                             oversampling=param['oversampling'], metric=metric)
+            scores_dict = cross_val_w_oversampling(data, labels, k=cv_k, model=LogisticRegression(),
+                                                   oversampling=param['oversampling'], metrics=metrics)
 
         if model == 'lda':
-            score = cross_val_w_oversampling(data, labels, k=cv_k, model=Lda(), oversampling=param['oversampling'],
-                                             metric=m)
+            scores_dict = cross_val_w_oversampling(data, labels, k=cv_k, model=Lda(),
+                                                   oversampling=param['oversampling'],
+                                                   metrics=metrics)
 
         if model == 'svc':
-            score = cross_val_w_oversampling(data, labels, k=cv_k,
-                                             model=SVC(kernel=param['kernel'], gamma=param['gamma']),
-                                             oversampling=param['oversampling'], metric=metric)
+            scores_dict = cross_val_w_oversampling(data, labels, k=cv_k,
+                                                   model=SVC(kernel=param['kernel'], gamma=param['gamma']),
+                                                   oversampling=param['oversampling'], metrics=metrics)
         if model == 'naive_bayes':
             m = cross_val_w_oversampling(data, labels, k=cv_k, model=GaussianNB(),
-                                         oversampling=param['oversampling'], metric=metric)
+                                         oversampling=param['oversampling'], metrics=metrics)
         if model == 'decision_tree':
-            score = cross_val_w_oversampling(data, labels, k=cv_k,
-                                             model=DecisionTreeClassifier(max_depth=param['max_depth']),
-                                             oversampling=param['oversampling'], metric=metric)
+            scores_dict = cross_val_w_oversampling(data, labels, k=cv_k,
+                                                   model=DecisionTreeClassifier(max_depth=param['max_depth']),
+                                                   oversampling=param['oversampling'], metrics=metrics)
         if model == 'random_forest':
-            score = cross_val_w_oversampling(data, labels, k=cv_k,
-                                             model=RandomForestClassifier(max_depth=param['max_depth'],
-                                                                          n_estimators=param['n_estimators']),
-                                             oversampling=param['oversampling'], metric=metric)
+            scores_dict = cross_val_w_oversampling(data, labels, k=cv_k,
+                                                   model=RandomForestClassifier(max_depth=param['max_depth'],
+                                                                                n_estimators=param['n_estimators']),
+                                                   oversampling=param['oversampling'], metrics=metrics)
         if model == 'gradient_boosting':
-            score = cross_val_w_oversampling(data, labels, k=cv_k,
-                                             model=GradientBoostingClassifier(n_estimators=param['n_estimator'],
-                                                                              max_depth=param['max_depth']),
-                                             oversampling=param['oversampling'], metric=metric)
+            scores_dict = cross_val_w_oversampling(data, labels, k=cv_k,
+                                                   model=GradientBoostingClassifier(n_estimators=param['n_estimator'],
+                                                                                    max_depth=param['max_depth']),
+                                                   oversampling=param['oversampling'], metrics=metrics)
 
-        d[metric.__name__].append(score)
+        for metric_name, score in scores_dict.items():
+            d[metric_name].append(score)
 
     return pd.DataFrame(data=d)
