@@ -4,20 +4,20 @@ from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
 
 
-def preprocessing(X, start = 0, stop = -3, thres = 0.95, norm = True, dummy = True, drop_corr = True):
+def classic_preprocessing(X, start=0, stop=-3, thresh=0.95, norm=True, dummy=True, drop_corr=True):
     if norm:
         X = standardize(X, start, stop)
     if dummy:
-        X = dummy_code(X, columns = ['Gender', 'Resp_Condition', 'Symptoms'])
+        X = dummy_code(X, columns=['Gender', 'Resp_Condition', 'Symptoms'])
     if drop_corr:
-        X = remove_correlated_features(X, thres)
-        
+        X = remove_correlated_features(X, thresh)
+
         return X
 
-def standard_preprocessing(samples, labels, do_standardize=True,
-    do_smote=True, do_dummy_coding=True,
-    categorical_features = ['Gender', 'Resp_Condition', 'Symptoms']):
 
+def standard_preprocessing(samples, labels, do_standardize=True,
+                           do_smote=True, do_dummy_coding=True,
+                           categorical_features=['Gender', 'Resp_Condition', 'Symptoms']):
     if do_standardize:
         # standardize all non categorical features
         samples = standardize(samples, 0, -len(categorical_features))
@@ -28,7 +28,7 @@ def standard_preprocessing(samples, labels, do_standardize=True,
 
     if do_smote:
         # smote
-        # TODO smote might change dummy coding, i.e., make it continous
+        # TODO smote might change dummy coding, i.e., make it continuous
         samples, labels = oversample(samples, labels)
 
     return samples, labels
@@ -84,6 +84,7 @@ def dummy_code(df, columns):
     df = df.drop(['Gender_0.5', 'Resp_Condition_0.5', 'Symptoms_0.5'], axis=1)
 
     return df
+
 
 # TODO remove from here, already in faeture engineering
 def remove_correlated_features(df, threshold, print_features=False):

@@ -26,6 +26,9 @@ def hyperparameter_tuning_cv(model, data, labels, cv_k, params,
     assert model in implemented_models, "model does not exist"
 
     d = defaultdict(list)
+    indexes_list = []
+    for i in params.keys():
+        indexes_list.append(i)
     param_grid = ParameterGrid(params)
     for param in param_grid:
         for key, value in param.items():
@@ -37,7 +40,8 @@ def hyperparameter_tuning_cv(model, data, labels, cv_k, params,
                                                    model=KNeighborsClassifier(n_neighbors=param["n_neighbors"]),
                                                    oversampling=param['oversampling'], metrics=metrics)
         if model == 'logistic':
-            scores_dict = cross_val_w_oversampling(data, labels, k=cv_k, model=LogisticRegression(),
+            scores_dict = cross_val_w_oversampling(data, labels, k=cv_k,
+                                                   model=LogisticRegression(max_iter=param["max_iter"]),
                                                    oversampling=param['oversampling'], metrics=metrics)
 
         if model == 'lda':
@@ -46,11 +50,14 @@ def hyperparameter_tuning_cv(model, data, labels, cv_k, params,
                                                    metrics=metrics)
 
         if model == 'svc':
-            scores_dict = cross_val_w_oversampling(data, labels, k=cv_k,
-                                                   model=SVC(kernel=param['kernel'], gamma=param['gamma']),
-                                                   oversampling=param['oversampling'], metrics=metrics)
+            try:
+                scores_dict = cross_val_w_oversampling(data, labels, k=cv_k,
+                                                       model=SVC(kernel=param['kernel'], gamma=param['gamma']),
+                                                       oversampling=param['oversampling'], metrics=metrics)
+            except ValueError:
+                break
         if model == 'naive_bayes':
-            m = cross_val_w_oversampling(data, labels, k=cv_k, model=GaussianNB(),
+            scores_dict = cross_val_w_oversampling(data, labels, k=cv_k, model=GaussianNB(),
                                          oversampling=param['oversampling'], metrics=metrics)
         if model == 'decision_tree':
             scores_dict = cross_val_w_oversampling(data, labels, k=cv_k,
@@ -63,7 +70,7 @@ def hyperparameter_tuning_cv(model, data, labels, cv_k, params,
                                                    oversampling=param['oversampling'], metrics=metrics)
         if model == 'gradient_boosting':
             scores_dict = cross_val_w_oversampling(data, labels, k=cv_k,
-                                                   model=GradientBoostingClassifier(n_estimators=param['n_estimator'],
+                                                   model=GradientBoostingClassifier(n_estimators=param['n_estimators'],
                                                                                     max_depth=param['max_depth']),
                                                    oversampling=param['oversampling'], metrics=metrics)
 
@@ -71,5 +78,5 @@ def hyperparameter_tuning_cv(model, data, labels, cv_k, params,
             d[metric_name].append(score)
 
     df = pd.DataFrame(data=d)
-
+    df.set_index(indexes_list, inplace=True)
     return df
