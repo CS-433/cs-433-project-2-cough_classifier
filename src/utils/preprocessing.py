@@ -3,6 +3,17 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
 
+
+def preprocessing(X, start = 0, stop = -3, thres = 0.95, norm = True, dummy = True, drop_corr = True):
+    if norm:
+        X = standardize(X, start, stop)
+    if dummy:
+        X = dummy_code(X, columns = ['Gender', 'Resp_Condition', 'Symptoms'])
+    if drop_corr:
+        X = remove_correlated_features(X, thres)
+        
+        return X
+
 def standard_preprocessing(samples, labels, do_standardize=True,
     do_smote=True, do_dummy_coding=True,
     categorical_features = ['Gender', 'Resp_Condition', 'Symptoms']):

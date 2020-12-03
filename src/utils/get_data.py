@@ -66,6 +66,8 @@ def create_multi_index(data):
     data.drop(["File_Name"], axis=1, errors='ignore', inplace=True)
 
     return data
+
+
 def expert_models(X, y, oversampling = True):
     
     # Split the data according to which expert labeled it

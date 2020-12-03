@@ -16,7 +16,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
-from preprocessing import oversample
+from src.utils.preprocessing import oversample
 
 
 def train_test_split(X: pd.DataFrame, y: pd.DataFrame, random_state=42, fraction=0.7):
