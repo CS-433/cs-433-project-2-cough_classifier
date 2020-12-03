@@ -12,7 +12,7 @@ import torch.nn as nn
 import torch.optim as optim
 from src.models.model import BinaryClassification
 from src.utils.utils import binary_acc, area_under_the_curve, get_shap_values
-from src.utils.get_data import import_data, get_data_loader
+from src.utils.get_data import import_data, get_data_loader, split_experts
 from src.utils.preprocessing import standardize
 from src.utils.config import SEED
 from src.utils.preprocessing import standard_preprocessing
@@ -26,13 +26,13 @@ DATA_PATH = './data'
 GS_DIR = "./models/grid_search_results"
 PARAM_DIR = "./models/weights"
 
-
+#ok
 def train_model(X_train, y_train, model="binary", criterion="BCE",
                 optimizer="Adam", smote=False,
                 activation_function="relu", batch_size=128,
-                hidden_layer_dims=[200, 200], epochs=250,
-                learning_rate=0.0001,
-                dropout=0.5, weight_decay=5., verbose=True, random_state=SEED):
+                hidden_layer_dims=[100], epochs=250,
+                learning_rate=0.00005,
+                dropout=0.5, weight_decay=1.0, verbose=True, random_state=SEED):
     """
     Modular Function for initializing and training a model.
 
@@ -60,6 +60,13 @@ def train_model(X_train, y_train, model="binary", criterion="BCE",
         model (nn.Module): A trained model.
     """
 
+    split_val = 0.2
+    X_val = X_train[int(X_train.shape[0]*(1-split_val)):]
+    y_val = y_train[int(y_train.shape[0]*(1-split_val)):]
+
+    X_train = X_train[:int(X_train.shape[0]*(1-split_val))]
+    y_train = y_train[:int(y_train.shape[0]*(1-split_val))]
+
     # apply class imbalance equalization using SMOTE
     if smote:
         oversample = SMOTE(random_state=random_state)
@@ -68,7 +75,7 @@ def train_model(X_train, y_train, model="binary", criterion="BCE",
 
     # create a torch data loader for training
     train_loader = get_data_loader(X_train, y_train, batch_size)
-
+    val_loader = get_data_loader(X_val, y_val, 1)
     # initiate the correct model
     if model == "binary":
         model = BinaryClassification([X_train.shape[1], *hidden_layer_dims, 1],
@@ -92,22 +99,31 @@ def train_model(X_train, y_train, model="binary", criterion="BCE",
     elif optimizer == "SGD":
         optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate,
                                     weight_decay=weight_decay, momentum=0.5)  # TODO variable momentum
-    # set pytorch model into training mode (relevant for batch norm, dropout, ..)
-    model.train()
+
 
     # list that is used for the convergence criteria
     loss_list = []
+    # for the cases where, by chance, there are no positive samples
+    # in the batch of the true labels,
 
+    losses_epochs = []
     # for each epoch...
+    best_model = None
+    best_epoch = -1
     for e in range(1, epochs + 1):
         # ints used for calculating the loss/accuracy/area under the curve for
         # and epoch
         epoch_loss = 0
         epoch_acc = 0
         epoch_auc = 0
-
+        missing = 0
+        # set pytorch model into training mode (relevant for batch norm, dropout, ..)
+        model.train()
         # go through all batches...
         for X_batch, y_batch in train_loader:
+            if y_batch.ndim == 1:
+                y_batch = y_batch[:, None]
+
             # map them to cpu/gpu tensors
             X_batch, y_batch = X_batch.to(device), y_batch.to(device)
             # set up optimizer
@@ -116,37 +132,57 @@ def train_model(X_train, y_train, model="binary", criterion="BCE",
             # make a prediction with the model
             y_pred = model(X_batch)
             # calculate the loss of the prediction
+            #print("CHECK1")
             loss = criterion(y_pred, y_batch)
             # calculate acc and auc of the predication
             acc = binary_acc(y_pred, y_batch)
-            auc = area_under_the_curve(y_pred.detach().numpy(), y_batch.detach().numpy())
-
+            if len(np.unique(y_batch)) == 1:
+                missing +=1
+            else:
+                auc = area_under_the_curve(y_pred.detach().numpy(), y_batch.detach().numpy())
+            #print("CHECK2")
             # perform backpropagation
             loss.backward()
             # use the optimizer to update the weights for this batch
             optimizer.step()
-
+            #print("CHECK")
             # intermediate step for epoch stats
             epoch_loss += loss.item()
             epoch_acc += acc.item()
-            epoch_auc += auc.item()
+            if len(np.unique(y_batch)) == 2:
+                epoch_auc += auc.item()
 
         # at the end of the epoch, append this epochs avg loss this list
         loss_list.append(epoch_loss / len(train_loader))
 
+        model.eval()
+        loss_val = []
+        for X_batch, y_batch in val_loader:
+            y_pred = model(X_batch)
+            #print(y_pred.shape)
+            loss = criterion(y_pred[:,0], y_batch)
+
+            loss_val.append(loss.item())
+        loss_mean = np.mean(loss_val)
+        losses_epochs.append(loss_mean)
+
         if verbose:
-            print(
-                f'Epoch {e + 0:03}: | Loss: {epoch_loss / len(train_loader):.5f} | '
-                f'Acc: {epoch_acc / len(train_loader):.3f} | AUC: {epoch_auc / len(train_loader):.3f}')
+            #print(
+            #    f'Epoch {e + 0:03}: | Loss: {epoch_loss / len(train_loader):.5f} | '
+            #    f'Acc: {epoch_acc / len(train_loader):.3f} | AUC: {epoch_auc / (len(train_loader) - missing):.3f}')
+            print(f'Epoch {e + 0:03}: | Loss: {loss_mean:.5f}')
+
 
         # convergence criteria: if the last 10 average epoch losses are all
         # worse (higher) than the best epoch
-        if (np.array(loss_list[-10:]) > min(loss_list)).all():
-            if verbose:
-                print("[!] Converged")
-            break
+        if np.min(losses_epochs) == losses_epochs[-1]:
+            best_epoch = e
+            print("BEST IS", losses_epochs[-1])
+            best_model = model.state_dict()
 
-    # return the trained model
+        if (e - best_epoch) > 100:
+            break
+    model.load_state_dict(best_model)
     return model
 
 
@@ -215,18 +251,23 @@ def test_model(X_test, y_test, model, batch_size=1, verbose=True):
 ################################################################################
 ################################################################################
 def cross_validation_nn(X, y, subjects, K, train_size=0.3, models=["binary"],
-                        hidden_layer_dims=[[100], [200], [400], [800], [100, 100], [200, 200], [300, 300],
-                                           [100, 100, 100], [200, 200, 200], [300, 300, 300], [100, 100, 100, 100],
-                                           [200, 200, 200, 200]],
+                        hidden_layer_dims=[[50], [100], [200], [400], [800], [50]*2,
+                                            [100]*2, [200]*2, [300]*2,
+                                           [100]*3, [200]*3,
+                                           [300]*3,
+                                           [50]*4,
+                                           [100]*4],
                         batch_sizes=[128],
-                        learning_rates=[0.01, 0.005, 0.001, 0.0005, 0.0001],
+                        learning_rates=[0.01, 0.001, 0.0001, 0.00001],
                         criteria=["BCE"],
                         optimizers=["SGD", "Adam"],
                         activation_functions=["relu"],
-                        weight_decays=[0.0, 0.5],
-                        dropouts=[.2],
-                        smote_setups=[True],
+                        weight_decays=[0.5, 1.5, 2.5],
+                        dropouts=[.2, 0.5],
+                        smote_setups=[True, False],
                         epochs=1000,
+                        type_of_data="whole",
+                        using_user_features=True,
                         random_state=42,
                         verbose=False):
     """
@@ -339,15 +380,16 @@ def cross_validation_nn(X, y, subjects, K, train_size=0.3, models=["binary"],
                                             # transform to dictionary
                                             gs_df = pd.DataFrame.from_dict(gs_dic)
                                             # save dictionary
-                                            gs_df.to_csv(GS_DIR + "/" + "grid_search_df" + start_time + ".csv")
+                                            gs_df.to_csv(GS_DIR + "/" + "grid_search_df_" + "uses_user_features_" + str(using_user_features) + "_" + type_of_data + "_" + start_time + ".csv")
 
-    # gs_df = pd.read_csv("grid_search_results/grid_search_d_27112020_030929.csv")
+    #gs_df = pd.read_csv("grid_search_results/grid_search_d_27112020_030929.csv")
 
     # gather the best hyperparameters and train a model on the full training
     # data using them
     # NOTE: we could also use accuracy here
     best_params = gs_df.loc[gs_df['avg_auc'].idxmax()]
 
+    """
     # TODO: when read form data (at least) the values are strings, all of them
     best_model = train_model(X, y, model=best_params["model"],
                              criterion=best_params["criterion"],
@@ -369,44 +411,61 @@ def cross_validation_nn(X, y, subjects, K, train_size=0.3, models=["binary"],
                + start_time + ".pt")
 
     return best_model
-
+    """
 
 ################################################################################
 ################################################################################
 ################################################################################
 
 if __name__ == "__main__":
-    # get the raw data as numpy, also get the subject of each sample
-    X, y, subject_indices, feature_names = import_data(path=DATA_PATH, segmentation_type='coarse',
-                                                       is_user_features=True, return_type='np')
-    df1, df2 = import_data(path=DATA_PATH, segmentation_type='coarse',
-                                                       is_user_features=True, return_type='pd')
 
-    feature_names = df1.columns
-    subject_indices = [l[0] for l in list(df1.index)]
+    grid_search = False
+    split_by_expert = True
+    drop_user_features = False
+    segmentation_type = "coarse"
 
-    # preprocess our features
-    #X = standardize(X)
-    df1, df2 = standard_preprocessing(df1, df2, do_smote=False)
-    df1, df2 = feature_engineering(df1, df2)
-    X = df1.values
-    y = df2.Label.values
-    # split samples, labels and corresponding subject into training and test
-    X_train, X_test, y_train, y_test, subjects_train, subjects_test = train_test_split(X,
-                                                                                       y,
-                                                                                       subject_indices,
-                                                                                       test_size=0.3,
-                                                                                       random_state=SEED)
+    # get feature and label dataframes
+    features_whole, labels_whole = import_data(path=DATA_PATH, segmentation_type=segmentation_type,
+                                drop_user_features=drop_user_features, return_type='pd',
+                                drop_expert= not split_by_expert)
 
-    # Use cross validation to find the best model hyperparameters, and train
-    # a model using these parameters on the whole training dataset
-    # model = cross_validation_nn(X_train, y_train, subjects_train, K=4, verbose=False)
-    model = train_model(X_train, y_train, smote=True, verbose=True, epochs=750)
+    if not split_experts:
+        data = {"whole_data":(features_whole, labels_whole)}
+    else:
+        temp_data = split_experts(features_whole, labels_whole)
+        data = {f"expert_{int((i/2)+1)}":(temp_data[i], temp_data[i+1]) for i in range(0, len(temp_data), 2)}
 
-    # get the shap values
-    #shap_df = get_shap_values(model, X_train, X_test, feature_names, device=device)
-    print("\n\nSHAP VALUES")
-    #print(shap_df)
-    print("\n\n")
-    # test the model
-    test_model(X_test, y_test, model, verbose=True)
+    for name, (features, labels) in data.items():
+        print("Looking at: " + name)
+
+        # get the correspondence to individuals
+        subject_indices = [l[0] for l in list(features.index)]
+
+        # preprocess our features
+        features, labels = standard_preprocessing(features, labels, do_smote=False)
+        # apply feature engineering
+        features, labels = feature_engineering(features, labels)
+
+        if grid_search:
+            # cross validation
+            cross_validation_nn(features.values, labels.values, subject_indices,
+                K  = 4, verbose = True,
+                using_user_features = not drop_user_features,
+                type_of_data=name)
+
+
+        else:
+            # split them into train and test according to the groups
+            gss = GroupShuffleSplit(n_splits=1, train_size=0.7, random_state=SEED)
+
+            for train_idx, test_idx in gss.split(features.values, labels.values, subject_indices):
+                continue
+
+            model = train_model(features.values[train_idx], labels.values[train_idx], smote=True, verbose=True, epochs=750)
+            #shap
+            shap_df = get_shap_values(model, features.values[train_idx], features.values[test_idx], features.columns, device=device)
+            print("\n\nSHAP VALUES")
+            print(shap_df)
+
+            # test the model
+            test_model(features.values[test_idx], labels.values[test_idx], model, verbose=True)

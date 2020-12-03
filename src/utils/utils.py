@@ -47,6 +47,7 @@ def area_under_the_curve(y_pred, y_test):
     """
     y_pred = y_pred
     y_test = y_test
+
     fpr, tpr, thresholds = metrics.roc_curve(y_test, y_pred)
     return metrics.auc(fpr, tpr)
 
@@ -57,6 +58,9 @@ def get_shap_values(model, X_train, X_test, feature_names,
     """
     TODO
     """
+
+    train_sample_size = min(train_sample_size, X_train.shape[0])
+    test_sample_size = min(test_sample_size, X_test.shape[0])
     # get training and testing samples
     train_samples = torch.from_numpy(X_train[np.random.choice(X_train.shape[0],
                                                               train_sample_size, replace=False)]).float().to(device)
