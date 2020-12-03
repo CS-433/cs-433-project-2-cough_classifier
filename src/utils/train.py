@@ -4,6 +4,7 @@ from collections import defaultdict
 import pandas as pd
 
 # Standard ML models
+from sklearn.metrics import roc_auc_score, f1_score, accuracy_score
 from sklearn.model_selection import ParameterGrid
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
@@ -17,9 +18,11 @@ from sklearn.ensemble import GradientBoostingClassifier
 from src.utils.model_helpers import cross_val_w_oversampling
 
 
-def hyperparameter_tuning_cv(model, data, labels, cv_k, params, metrics) -> pd.DataFrame:
+def hyperparameter_tuning_cv(model, data, labels, cv_k, params,
+                             metrics=[f1_score, roc_auc_score, accuracy_score]) -> pd.DataFrame:
     implemented_models = (
         'knn', 'logistic', 'lda', 'svc', 'naive_bayes', 'decision_tree', 'random_forest', 'gradient_boosting')
+
     assert model in implemented_models, "model does not exist"
 
     d = defaultdict(list)
@@ -67,4 +70,6 @@ def hyperparameter_tuning_cv(model, data, labels, cv_k, params, metrics) -> pd.D
         for metric_name, score in scores_dict.items():
             d[metric_name].append(score)
 
-    return pd.DataFrame(data=d)
+    df = pd.DataFrame(data=d)
+
+    return df

@@ -7,7 +7,7 @@ import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import GroupShuffleSplit
 
-from sklearn.metrics import plot_roc_curve, auc, roc_auc_score
+from sklearn.metrics import plot_roc_curve, auc, roc_auc_score, f1_score, accuracy_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as Lda
@@ -93,7 +93,7 @@ def AUC_all_models(X, y, k=4, oversampling=True):
     return pd.DataFrame(data=d)
 
 
-def cross_val_w_oversampling(X, y, k, model, oversampling=True, metrics=[roc_auc_score]):
+def cross_val_w_oversampling(X, y, k, model, oversampling=True, metrics=[f1_score, roc_auc_score, accuracy_score]):
     groups = X.index
     gss = GroupShuffleSplit(n_splits=k, train_size=.7, random_state=42)
     gss.get_n_splits()
