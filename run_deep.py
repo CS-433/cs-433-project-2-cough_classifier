@@ -1,4 +1,5 @@
 import datetime
+import sys
 
 import pandas as pd
 import numpy as np
@@ -132,7 +133,7 @@ def train_model(X_train, y_train, model="binary", criterion="BCE",
             # make a prediction with the model
             y_pred = model(X_batch)
             # calculate the loss of the prediction
-            #print("CHECK1")
+
             loss = criterion(y_pred, y_batch)
             # calculate acc and auc of the predication
             acc = binary_acc(y_pred, y_batch)
@@ -140,12 +141,12 @@ def train_model(X_train, y_train, model="binary", criterion="BCE",
                 missing +=1
             else:
                 auc = area_under_the_curve(y_pred.detach().numpy(), y_batch.detach().numpy())
-            #print("CHECK2")
+
             # perform backpropagation
             loss.backward()
             # use the optimizer to update the weights for this batch
             optimizer.step()
-            #print("CHECK")
+
             # intermediate step for epoch stats
             epoch_loss += loss.item()
             epoch_acc += acc.item()
@@ -159,9 +160,11 @@ def train_model(X_train, y_train, model="binary", criterion="BCE",
         loss_val = []
         for X_batch, y_batch in val_loader:
             y_pred = model(X_batch)
-            #print(y_pred.shape)
-            loss = criterion(y_pred[:,0], y_batch)
-
+            if y_pred.ndim == 2:
+                y_pred = y_pred[:, 0]
+            if y_batch.ndim == 2:
+                y_batch = y_batch[:, 0]
+            loss = criterion(y_pred, y_batch)
             loss_val.append(loss.item())
         loss_mean = np.mean(loss_val)
         losses_epochs.append(loss_mean)
@@ -173,13 +176,12 @@ def train_model(X_train, y_train, model="binary", criterion="BCE",
             print(f'Epoch {e + 0:03}: | Loss: {loss_mean:.5f}')
 
 
-        # convergence criteria: if the last 10 average epoch losses are all
-        # worse (higher) than the best epoch
+        # update best model
         if np.min(losses_epochs) == losses_epochs[-1]:
             best_epoch = e
-            print("BEST IS", losses_epochs[-1])
             best_model = model.state_dict()
-
+        # convergence criterion: at least found a new best model in the last
+        # 100
         if (e - best_epoch) > 100:
             break
     model.load_state_dict(best_model)
@@ -251,25 +253,27 @@ def test_model(X_test, y_test, model, batch_size=1, verbose=True):
 ################################################################################
 ################################################################################
 def cross_validation_nn(X, y, subjects, K, train_size=0.3, models=["binary"],
-                        hidden_layer_dims=[[50], [100], [200], [400], [800], [50]*2,
-                                            [100]*2, [200]*2, [300]*2,
-                                           [100]*3, [200]*3,
-                                           [300]*3,
-                                           [50]*4,
-                                           [100]*4],
+                        hidden_layer_dims=[[50], [100], [200], [400], [800],
+                                            [50]*2, [100]*2, [200]*2, [300]*2,
+                                           [100]*3, [200]*3, [300]*3,
+                                           [50]*4, [100]*4],
                         batch_sizes=[128],
                         learning_rates=[0.01, 0.001, 0.0001, 0.00001],
                         criteria=["BCE"],
                         optimizers=["SGD", "Adam"],
                         activation_functions=["relu"],
-                        weight_decays=[0.5, 1.5, 2.5],
-                        dropouts=[.2, 0.5],
+                        weight_decays=[0.0, 0.5, 1.0, 1.5, 2.0, 2.5],
+                        dropouts=[0, .2, .5],
                         smote_setups=[True, False],
                         epochs=1000,
                         type_of_data="whole",
+                        segmentation_type="nan",
                         using_user_features=True,
                         random_state=42,
                         verbose=False):
+
+
+
     """
     Function to perform cross validation and find the best hyperparameters.
 
@@ -380,7 +384,7 @@ def cross_validation_nn(X, y, subjects, K, train_size=0.3, models=["binary"],
                                             # transform to dictionary
                                             gs_df = pd.DataFrame.from_dict(gs_dic)
                                             # save dictionary
-                                            gs_df.to_csv(GS_DIR + "/" + "grid_search_df_" + "uses_user_features_" + str(using_user_features) + "_" + type_of_data + "_" + start_time + ".csv")
+                                            gs_df.to_csv(GS_DIR + "/" + "grid_search_df_" + segmentation_type + "_uses_user_features_" + str(using_user_features) + "_" + type_of_data + "_" + start_time + ".csv")
 
     #gs_df = pd.read_csv("grid_search_results/grid_search_d_27112020_030929.csv")
 
@@ -419,17 +423,24 @@ def cross_validation_nn(X, y, subjects, K, train_size=0.3, models=["binary"],
 
 if __name__ == "__main__":
 
-    grid_search = False
-    split_by_expert = True
-    drop_user_features = False
-    segmentation_type = "coarse"
+    if len(sys.argv) == 1:
+        grid_search = True
+        split_by_expert = True
+        drop_user_features = False
+        segmentation_type = "coarse"
+    else:
+        segmentation_type = sys.argv[1]
+        split_by_expert = sys.argv[2] == "True"
+        drop_user_features = sys.argv[3] == "True"
+        grid_search = sys.argv[4] == "True"
 
+    drop_expert = not split_by_expert
     # get feature and label dataframes
     features_whole, labels_whole = import_data(path=DATA_PATH, segmentation_type=segmentation_type,
                                 drop_user_features=drop_user_features, return_type='pd',
-                                drop_expert= not split_by_expert)
+                                drop_expert= drop_expert)
 
-    if not split_experts:
+    if not split_by_expert:
         data = {"whole_data":(features_whole, labels_whole)}
     else:
         temp_data = split_experts(features_whole, labels_whole)
@@ -449,7 +460,8 @@ if __name__ == "__main__":
         if grid_search:
             # cross validation
             cross_validation_nn(features.values, labels.values, subject_indices,
-                K  = 4, verbose = True,
+                K  = 4, verbose = False,
+                segmentation_type = segmentation_type,
                 using_user_features = not drop_user_features,
                 type_of_data=name)
 
