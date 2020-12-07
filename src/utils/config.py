@@ -18,9 +18,9 @@ SEED = 42
 # GRID SEARCH PARAMETERS - STANDARD MODELS
 
 KNN_PARAMS = {'n_neighbors': list(range(1, 16)), 'oversampling': [True, False]}
-LOGISTIC_PARAMS = {'oversampling': [True, False]}
+LOGISTIC_PARAMS = {'max_iter': [10000, 100000], 'oversampling': [True, False]}
 LDA_PARAMS = {'oversampling': [True, False]}
-SVC_PARAMS = {'kernel': 'linear', 'gamma': [0.1, 0.01], 'oversampling': [True, False]}
+SVC_PARAMS = {'kernel': ['linear', 'rbf'], 'gamma': [0.1, 0.01], 'oversampling': [True, False]}
 NAIVE_BAYES_PARAMS = {'oversampling': [True, False]}
 DECISION_TREE_PARAMS = {'max_depth': [3, 5, 7], 'oversampling': [True, False]}
 RANDOM_FOREST_PARAMS = {'max_depth': [3, 5, 7], 'n_estimators': [3, 5, 7], 'oversampling': [True, False]}

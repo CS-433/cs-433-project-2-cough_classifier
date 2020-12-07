@@ -16,12 +16,16 @@ FILES = {
 def import_data(path, segmentation_type, drop_user_features=False, return_type='pd', drop_expert=True):
     """
     Import data
+
     :param path: path of data
     :type path: str
     :param segmentation_type: 'no', 'coarse', or 'fine'
     :type segmentation_type: str
     :param drop_user_features: specify if user features should be dropped
+    :type drop_user_features: bool
     :param return_type: 'pd', 'np'
+    :param drop_expert: specify if expert column should be dropped
+    :type drop_expert: bool
     :type return_type: str
     :return: dataframes containing features and labels
     """
@@ -69,22 +73,21 @@ def create_multi_index(data):
     return data
 
 
-def expert_models(X, y, oversampling = True):
-
+def expert_models(X, y, oversampling=True):
     # Split the data according to which expert labeled it
-    merged = X.merge(y, left_index=True, right_index = True)
+    merged = X.merge(y, left_index=True, right_index=True)
 
-    X_exp_1 = merged[merged['Expert'] == 1].iloc[:,:-1].drop(columns = ['Expert'], axis = 1)
-    y_exp_1 = merged[merged['Expert'] == 1].iloc[:,-1]
+    X_exp_1 = merged[merged['Expert'] == 1].iloc[:, :-1].drop(columns=['Expert'], axis=1)
+    y_exp_1 = merged[merged['Expert'] == 1].iloc[:, -1]
 
-    X_exp_2 = merged[merged['Expert'] == 2].iloc[:,:-1].drop(columns = ['Expert'], axis = 1)
-    y_exp_2 = merged[merged['Expert'] == 2].iloc[:,-1]
+    X_exp_2 = merged[merged['Expert'] == 2].iloc[:, :-1].drop(columns=['Expert'], axis=1)
+    y_exp_2 = merged[merged['Expert'] == 2].iloc[:, -1]
 
-    X_exp_3 = merged[merged['Expert'] == 3].iloc[:,:-1] .drop(columns = ['Expert'], axis = 1)
-    y_exp_3 = merged[merged['Expert'] == 3].iloc[:,-1]
+    X_exp_3 = merged[merged['Expert'] == 3].iloc[:, :-1].drop(columns=['Expert'], axis=1)
+    y_exp_3 = merged[merged['Expert'] == 3].iloc[:, -1]
 
     # All expert groups are about 1000 samples big
-    #print(len(X_exp_1), len(X_exp_2), len(X_exp_3))
+    # print(len(X_exp_1), len(X_exp_2), len(X_exp_3))
 
     # Train all models for all experts
     exp_1 = AUC_all_models(X_exp_1, y_exp_1, k=6, oversampling=oversampling)
@@ -100,18 +103,18 @@ def expert_models(X, y, oversampling = True):
 
     return results
 
+
 def split_experts(X, y):
+    merged = X.merge(y, left_index=True, right_index=True)
 
-    merged = X.merge(y, left_index=True, right_index = True)
+    X_exp_1 = merged[merged['Expert'] == 1].iloc[:, :-1].drop(columns=['Expert'], axis=1)
+    y_exp_1 = merged[merged['Expert'] == 1].iloc[:, -1]
 
-    X_exp_1 = merged[merged['Expert'] == 1].iloc[:,:-1].drop(columns = ['Expert'], axis = 1)
-    y_exp_1 = merged[merged['Expert'] == 1].iloc[:,-1]
+    X_exp_2 = merged[merged['Expert'] == 2].iloc[:, :-1].drop(columns=['Expert'], axis=1)
+    y_exp_2 = merged[merged['Expert'] == 2].iloc[:, -1]
 
-    X_exp_2 = merged[merged['Expert'] == 2].iloc[:,:-1].drop(columns = ['Expert'], axis = 1)
-    y_exp_2 = merged[merged['Expert'] == 2].iloc[:,-1]
-
-    X_exp_3 = merged[merged['Expert'] == 3].iloc[:,:-1].drop(columns = ['Expert'], axis = 1)
-    y_exp_3 = merged[merged['Expert'] == 3].iloc[:,-1]
+    X_exp_3 = merged[merged['Expert'] == 3].iloc[:, :-1].drop(columns=['Expert'], axis=1)
+    y_exp_3 = merged[merged['Expert'] == 3].iloc[:, -1]
 
     return X_exp_1, y_exp_1, X_exp_2, y_exp_2, X_exp_3, y_exp_3
 

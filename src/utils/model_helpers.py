@@ -122,6 +122,7 @@ def cross_val_w_oversampling(X, y, k, model, oversampling=True, metrics=[f1_scor
     return return_dict
 
 
+# TODO: delete this function
 def homemade_all_models(X, y, k=4):
     models = ["LogisticRegression", "SVM", "LDA", "KNN", "GaussianNB", "DecisionTree", "RandomForest",
               "GradientBoosting"]
