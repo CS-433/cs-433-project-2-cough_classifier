@@ -252,7 +252,6 @@ def test_model(X_test, y_test, model, batch_size=1, verbose=True):
 ################################################################################
 ################################################################################
 ################################################################################
-"""
 def cross_validation_nn(X, y, subjects, K, train_size=0.3, models=["binary"],
                         hidden_layer_dims=[[50], [100], [200], [400], [800],
                                             [50]*2, [100]*2, [200]*2, [300]*2,
@@ -265,23 +264,6 @@ def cross_validation_nn(X, y, subjects, K, train_size=0.3, models=["binary"],
                         activation_functions=["relu"],
                         weight_decays=[0.0, 0.5, 1.0, 1.5, 2.0, 2.5],
                         dropouts=[0, .2, .5],
-                        smote_setups=[True, False],
-                        epochs=1000,
-                        type_of_data="whole",
-                        segmentation_type="nan",
-                        using_user_features=True,
-                        random_state=42,
-                        verbose=False):
-"""
-def cross_validation_nn(X, y, subjects, K, train_size=0.3, models=["binary"],
-                        hidden_layer_dims=[[50]],
-                        batch_sizes=[128],
-                        learning_rates=[0.01],
-                        criteria=["BCE"],
-                        optimizers=["SGD"],
-                        activation_functions=["relu"],
-                        weight_decays=[0],
-                        dropouts=[.5],
                         smote_setups=[True, False],
                         epochs=1000,
                         type_of_data="whole",
