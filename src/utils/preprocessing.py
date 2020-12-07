@@ -11,7 +11,7 @@ def preprocessing(X, start = 0, stop = -3, thres = 0.95, norm = True, dummy = Tr
         X = dummy_code(X, columns = ['Gender', 'Resp_Condition', 'Symptoms'])
     if drop_corr:
         X = remove_correlated_features(X, thres)
-        
+
         return X
 
 def standard_preprocessing(samples, labels, do_standardize=True,
@@ -24,7 +24,7 @@ def standard_preprocessing(samples, labels, do_standardize=True,
 
     if do_dummy_coding:
         # dummy coding
-        samples = dummy_code(samples, columns=categorical_features)
+        samples = dummy_code(samples, columns=[feat for feat in categorical_features if feat in samples.columns])
 
     if do_smote:
         # smote
@@ -79,9 +79,10 @@ def dummy_code(df, columns):
     :type columns: list of str
     :return: dataframe with dummy coded columns
     """
-    df = pd.get_dummies(df, columns=columns)
-    # drop reference columns for ['Gender', 'Resp_Condition', 'Symptoms'] to avoid multi-colinearity
-    df = df.drop(['Gender_0.5', 'Resp_Condition_0.5', 'Symptoms_0.5'], axis=1)
+    if columns:
+        df = pd.get_dummies(df, columns=columns)
+        # drop reference columns for ['Gender', 'Resp_Condition', 'Symptoms'] to avoid multi-colinearity
+        df = df.drop(['Gender_0.5', 'Resp_Condition_0.5', 'Symptoms_0.5'], axis=1)
 
     return df
 
