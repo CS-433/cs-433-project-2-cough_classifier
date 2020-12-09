@@ -1,4 +1,4 @@
-for segmentation_type in coarse fine no
+for segmentation_type in fine no coarse
 do
   for drop_user_features in True False
   do

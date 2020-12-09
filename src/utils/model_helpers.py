@@ -1,6 +1,6 @@
 # Define a function that automatically plots the AUC curve for a given classifier
 from collections import defaultdict
-
+import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -18,6 +18,9 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
 from src.utils.preprocessing import oversample
 
+def weight_reset(m):
+    if isinstance(m, torch.nn.Linear):
+        m.reset_parameters()
 
 def train_test_split(X: pd.DataFrame, y: pd.DataFrame, random_state=42, fraction=0.7):
     """
