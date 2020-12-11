@@ -42,7 +42,7 @@ def train_model(X_train,
                 epochs = 1000,
                 learning_rate = 0.0001,
                 dropout = 0.5,
-                weight_decay = 0.0,
+                weight_decay = 0.5,
                 split_val = 0.33,
                 verbose = True,
                 random_state = SEED):
@@ -173,6 +173,8 @@ def train_model(X_train,
                 y_pred = y_pred[:, 0]
             if y_batch.ndim == 2:
                 y_batch = y_batch[:, 0]
+            #print(y_pred)
+            #print(y_batch)
             loss = criterion(y_pred, y_batch)
 
             # calculate acc and auc of the predication
@@ -195,26 +197,29 @@ def train_model(X_train,
 
         # update the best model, if the current epoch produced lowest auc/loss
         # use auc, if we never had a case that a batch contained only 0s
+        try_acc = False
         if not ("None" in val_auc_epochs) and (np.max(val_auc_epochs) == val_auc_epochs[-1]):
             best_epoch = epoch
             best_model = model.state_dict()
             indicator_string += "!"
+        elif ("None" in val_auc_epochs):
+            try_acc = True
         # otherwise use loss
-        elif np.min(val_losses_epochs) == val_losses_epochs[-1]:
+        if try_acc and np.min(val_losses_epochs) == val_losses_epochs[-1]:
             best_epoch = epoch
             best_model = model.state_dict()
             indicator_string += "!"
 
         if verbose:
             if isinstance(auc, str):
-                print(f'Epoch {epoch + 0:03}: | Validation Loss: {val_losses_epochs[-1]:.5f}  | ACC: {val_acc_epochs[-1]:.5f} | AUC: {val_auc_epochs[-1]} {indicator_string}')
+                print(f'Epoch {epoch + 0:03}: | Validation Loss: {val_losses_epochs[-1]:.3f}  | ACC: {val_acc_epochs[-1]:.3f} | AUC: {val_auc_epochs[-1]} {indicator_string}')
             else:
-                print(f'Epoch {epoch + 0:03}: | Validation Loss: {val_losses_epochs[-1]:.5f}  | ACC: {val_acc_epochs[-1]:.5f} | AUC: {val_auc_epochs[-1]:.5f} {indicator_string}')
+                print(f'Epoch {epoch + 0:03}: | Validation Loss: {val_losses_epochs[-1]:.3f}  | ACC: {val_acc_epochs[-1]:.3f} | AUC: {val_auc_epochs[-1]:.3f} {indicator_string}')
 
 
         # convergence criterion: at least found a new best model in the last
         # 100 epochs
-        if (epoch - best_epoch) >= 100:
+        if (epoch - best_epoch) >= 50:
             break
 
     # load the best model from memory
@@ -297,7 +302,8 @@ def cross_validation_nn(X,
                         models = ["binary"],
                         hidden_layer_dims = [[50], [100], [200], [400], [800],
                                                 [50]*2, [100]*2, [200]*2],
-                        learning_rates = [0.005, 0.001, 0.0005],
+                        batch_sizes = [128],
+                        learning_rates = [0.005, 0.001, 0.0005, 0.0001],
                         criteria = ["BCE"],
                         optimizers = ["SGD", "Adam"],
                         activation_functions = ["relu"],
@@ -364,7 +370,7 @@ def cross_validation_nn(X,
     # i.e. cross validation set, while also upholding the condition to not mix
     # samples from the same individual/group into both training and testing at
     # the same time
-    gss = GroupShuffleSplit(n_splits=K, train_size=train_size, random_state=random_state)
+    gss = GroupShuffleSplit(n_splits=K, train_size=1 - 1/K, random_state=random_state)
 
     # bring smote in
     for model in models:
@@ -372,9 +378,6 @@ def cross_validation_nn(X,
             for optimizer in optimizers:
                 for activation_function in activation_functions:
                     for dims in hidden_layer_dims:
-                        print("\n")
-                        print(
-                            f"[!] SETUP: Model={model} | Criterion={criterion} | Optimizer={optimizer} | AF={activation_function} | DIMS={dims}")
                         for batch_size in batch_sizes:
                             for learning_rate in learning_rates:
                                 for weight_decay in weight_decays:
@@ -383,7 +386,7 @@ def cross_validation_nn(X,
                                             # measure for evaluating each setup
                                             sum_acc = 0
                                             sum_auc = 0
-
+                                            print(f"[!] SETUP: {model} | {criterion} | {optimizer} | {activation_function} | {dims} | {learning_rate} | {weight_decay} | {dropout} | {smote}")
                                             # perform cross validation
                                             for train_idx, test_idx in gss.split(X, y, subjects):
                                                 # train a model with the given hyperparameters,
@@ -415,7 +418,7 @@ def cross_validation_nn(X,
                                                 # each time, reset the model weights
                                                 cv_model.apply(weight_reset)
                                             # print the average performance
-                                            print(f"Performance on current setup is ACC {sum_acc / K} and AUC {sum_auc / K}")
+                                            print(f"ACC {sum_acc / K:.3f} | AUC {sum_auc / K:.3f}")
                                             # save hyperparameters
                                             gs_dic["model"].append(model)
                                             gs_dic["criterion"].append(criterion)
@@ -491,7 +494,7 @@ if __name__ == "__main__":
         if grid_search:
             # cross validation
             cross_validation_nn(features.values, labels.values, subject_indices,
-                K  = 3, verbose = True,
+                K  = 10, verbose = False,
                 segmentation_type = segmentation_type,
                 using_user_features = not drop_user_features,
                 type_of_data=name)
@@ -509,8 +512,8 @@ if __name__ == "__main__":
             # TODO uses smote always
             model = train_model(features.values[train_idx],
                                 labels.values[train_idx],
+
                                 [subject_indices[x] for x in train_idx],
-                                smote = True,
                                 verbose = True,
                                 epochs = 750)
             # calculate the shap values
