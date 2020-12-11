@@ -15,6 +15,6 @@ def convert_and_split(filename):
 DATA_PATH = '../../data'
 
 if __name__ == '__main__':
-    X, y = import_data(DATA_PATH, segmentation_type='no', is_user_features=False, return_type='pd')
+    X, y = import_data(DATA_PATH, segmentation_type='no', drop_user_features=True, return_type='pd')
     for subject in tqdm(X.index.get_level_values(0)):
         convert_and_split(subject)

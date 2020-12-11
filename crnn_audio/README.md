@@ -66,7 +66,7 @@ Trainable parameters: 139786
 Run inference on an audio file:
 
 ```bash
-./run.py /path/to/audio/file.wav -r path/to/saved/model.pth 
+./run_lstm_raw_audio.py /path/to/audio/file.wav -r path/to/saved/model.pth 
 ```
 <p align="left">
 <img src="result_plots/street_music.png" width="500px"/>
@@ -75,7 +75,7 @@ Run inference on an audio file:
 
 #### Training
 ```bash
-./run.py train -c config.json --cfg arch.cfg
+./run_lstm_raw_audio.py train -c config.json --cfg arch.cfg
 ```
 
 ##### Augmentation
@@ -98,7 +98,7 @@ As well as [time stretching](https://github.com/keunwoochoi/torchaudio-contrib/b
 
 
 ```bash
-./run.py eval -r /path/to/saved/model.pth
+./run_lstm_raw_audio.py eval -r /path/to/saved/model.pth
 ```
 
 Then obtain defined metrics:

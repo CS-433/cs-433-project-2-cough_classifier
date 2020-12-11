@@ -25,14 +25,15 @@ class CSVDataManager(object):
         self.load_func = load_formats[config['format']]
 
         M_PATH = '../data'
-        _, self.metadata_df = import_data(M_PATH, is_user_features=False, segmentation_type='no', return_type='pd')
+        _, self.metadata_df = import_data(M_PATH, drop_user_features=True, segmentation_type='no', return_type='pd')
         self.metadata_df['cough_type'] = self.metadata_df.apply(lambda row: 'wet' if row['Label'] == 1 else 'dry',
                                                                 axis=1)
         self.classes = self._get_classes(
             self.metadata_df[['cough_type', 'Label']])
         self.data_splits = self._10kfold_split(self.metadata_df)
 
-    def _get_classes(self, df):
+    @staticmethod
+    def _get_classes(df):
         c_col = df.columns[0]
         idx_col = df.columns[1]
         return df.drop_duplicates().sort_values(idx_col)[c_col].unique()
@@ -58,7 +59,8 @@ class CSVDataManager(object):
 
         return tdata.DataLoader(dataset=dataset, **self.loader_params, collate_fn=self.pad_seq)
 
-    def pad_seq(self, batch):
+    @staticmethod
+    def pad_seq(batch):
         # sort_ind should point to length
         sort_ind = 0
         sorted_batch = sorted(

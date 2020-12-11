@@ -7,9 +7,9 @@ from imblearn.over_sampling import SMOTE
 def classic_preprocessing(X_tr, X_te=None, start=0, stop=-3, thresh=0.95, norm=True, dummy=True, drop_corr=True):
     if norm:
         if X_te is not None:
-            X_tr, X_te = standardize(X_tr, X_te, start, stop)
+            X_tr, X_te = standardize(X_tr, X_te, idx_start=start, idx_end=stop)
         else:
-            X_tr = standardize(X_tr, start, stop)
+            X_tr = standardize(X_tr, idx_start=start, idx_end=stop)
     if dummy:
         X_tr = dummy_code(X_tr, columns=['Gender', 'Resp_Condition', 'Symptoms'])
         if X_te is not None:
@@ -45,7 +45,7 @@ def standard_preprocessing(samples, labels, do_standardize=True,
     return samples, labels
 
 
-def standardize(X_tr, X_te, idx_start=0, idx_end=None):
+def standardize(X_tr, X_te=None, idx_start=0, idx_end=None):
     """
     Standardize columns
     :param data: dataframe

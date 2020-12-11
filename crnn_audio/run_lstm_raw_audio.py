@@ -42,6 +42,7 @@ def eval_main(checkpoint):
     m_name, sd, classes = _get_model_att(checkpoint)
     model = getattr(net_module, m_name)(classes, config, state_dict=sd)
 
+    print("model")
     print(model)
 
     model.load_state_dict(checkpoint['state_dict'])
@@ -50,7 +51,7 @@ def eval_main(checkpoint):
     metrics = getattr(net_module, config['metrics'])(num_classes)
 
     evaluation = ClassificationEvaluator(test_loader, model)
-    ret = evaluation.evaluate(metrics)
+    ret = evaluation.evaluate(metrics, debug=False)
     print(ret)
     return ret
 
@@ -67,7 +68,7 @@ def infer_main(file_path, config, checkpoint):
     tsf = _get_transform(config, 'val')
     inference = AudioInference(model, transforms=tsf)
     label, conf = inference.infer(file_path)
-    print(label, conf)
+    # print(label, conf)
     inference.draw(file_path, label, conf)
 
 
@@ -78,7 +79,7 @@ def train_main(config, resume):
 
     t_transforms = _get_transform(config, 'train')
     v_transforms = _get_transform(config, 'val')
-    print(t_transforms)
+    # print(t_transforms)
 
     data_manager = getattr(data_module, config['data']['type'])(config['data'])
     classes = data_manager.classes
@@ -87,6 +88,9 @@ def train_main(config, resume):
 
     m_name = config['model']['type']
     model = getattr(net_module, m_name)(classes, config=config)
+
+    print(model)
+
     num_classes = len(classes)
     loss = getattr(net_module, config['train']['loss'])
     metrics = getattr(net_module, config['metrics'])(num_classes)
@@ -137,22 +141,22 @@ def _test_loader(config):
 
 
 if __name__ == '__main__':
-    argparser = argparse.ArgumentParser(description='PyTorch Template')
+    arg_parser = argparse.ArgumentParser(description='PyTorch Template')
 
-    argparser.add_argument('action', type=str,
-                           help='what action to take (train, test, eval)')
+    arg_parser.add_argument('action', type=str,
+                            help='what action to take (train, test, eval)')
 
-    argparser.add_argument('-c', '--config', default=None, type=str,
-                           help='config file path (default: None)')
-    argparser.add_argument('-r', '--resume', default=None, type=str,
-                           help='path to latest checkpoint (default: None)')
-    argparser.add_argument('--net_mode', default='init', type=str,
-                           help='type of transfer learning to use')
+    arg_parser.add_argument('-c', '--config', default=None, type=str,
+                            help='config file path (default: None)')
+    arg_parser.add_argument('-r', '--resume', default=None, type=str,
+                            help='path to latest checkpoint (default: None)')
+    arg_parser.add_argument('--net_mode', default='init', type=str,
+                            help='type of transfer learning to use')
 
-    argparser.add_argument('--cfg', default=None, type=str,
-                           help='nn layer config file')
+    arg_parser.add_argument('--cfg', default=None, type=str,
+                            help='nn layer config file')
 
-    args = argparser.parse_args()
+    args = arg_parser.parse_args()
     print(args)
     # Resolve config vs. resume
     checkpoint = None
