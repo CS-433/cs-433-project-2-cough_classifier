@@ -31,7 +31,7 @@ def standard_preprocessing(samples, labels, do_standardize=True,
                            categorical_features=['Gender', 'Resp_Condition', 'Symptoms']):
     if do_standardize:
         # standardize all non categorical features
-        samples = standardize(samples, 0, -len(categorical_features))
+        samples = standardize(samples, None, 0, -len(categorical_features))
 
     if do_dummy_coding:
         # dummy coding
