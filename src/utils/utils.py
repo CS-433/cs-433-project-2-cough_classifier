@@ -3,6 +3,8 @@ import torch
 import numpy as np
 import shap
 import pandas as pd
+import csv
+from datetime import datetime
 
 
 def binary_acc(y_pred, y_test):
@@ -84,3 +86,27 @@ def get_shap_values(model, X_train, X_test, feature_names,
     shap_df = shap_df.sort_values("mean_abs_shap", ascending=False)
 
     return shap_df
+
+
+def create_csv_submission(y_pred, segm_type, submission_path, user_features):
+    """
+    Creates an output file in csv format for submission to kaggle
+    Arguments: ids (event ids associated with each prediction)
+               y_pred (predicted class labels)
+               name (string name of .csv output file to be created)
+    """
+
+    if user_features:
+        metadata = "w_metadata"
+    else:
+        metadata = "no_metadata"
+
+    now = datetime.now()
+    now_str = now.strftime("%H_%M_%S")
+    name = f"predictions_{segm_type}_segmentation_{metadata}_{now_str}"
+    with open(submission_path + "/" + name, 'w') as csv_file:
+        fieldnames = ['Label']
+        writer = csv.DictWriter(csv_file, delimiter=",", fieldnames=fieldnames)
+        writer.writeheader()
+        for row in y_pred:
+            writer.writerow({'Label': row})

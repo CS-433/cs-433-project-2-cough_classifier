@@ -4,15 +4,26 @@ from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
 
 
-def classic_preprocessing(X, start=0, stop=-3, thresh=0.95, norm=True, dummy=True, drop_corr=True):
+def classic_preprocessing(X_tr, X_te=None, start=0, stop=-3, thresh=0.95, norm=True, dummy=True, drop_corr=True):
     if norm:
-        X = standardize(X, start, stop)
+        if X_te is not None:
+            X_tr, X_te = standardize(X_tr, X_te, start, stop)
+        else:
+            X_tr = standardize(X_tr, start, stop)
     if dummy:
-        X = dummy_code(X, columns=['Gender', 'Resp_Condition', 'Symptoms'])
+        X_tr = dummy_code(X_tr, columns=['Gender', 'Resp_Condition', 'Symptoms'])
+        if X_te is not None:
+            X_te = dummy_code(X_te, columns=['Gender', 'Resp_Condition', 'Symptoms'])
     if drop_corr:
-        X = remove_correlated_features(X, thresh)
+        if X_te is not None:
+            X_tr, X_te = remove_correlated_features(X_tr, X_te, threshold=thresh)
+        else:
+            X_tr = remove_correlated_features(X_tr, threshold=thresh)
 
-        return X
+    if X_te is not None:
+        return X_tr, X_te
+
+    return X_tr
 
 
 def standard_preprocessing(samples, labels, do_standardize=True,
@@ -34,7 +45,7 @@ def standard_preprocessing(samples, labels, do_standardize=True,
     return samples, labels
 
 
-def standardize(data, idx_start=0, idx_end=None):
+def standardize(X_tr, X_te, idx_start=0, idx_end=None):
     """
     Standardize columns
     :param data: dataframe
@@ -46,11 +57,20 @@ def standardize(data, idx_start=0, idx_end=None):
     :return: dataframe with standardized columns
     """
     # Standardize the specified columns
-    if isinstance(data, np.ndarray):
-        return StandardScaler().fit_transform(data)
+    if isinstance(X_tr, np.ndarray):
+        scaler = StandardScaler()
+        X_tr = scaler.fit_transform(X_tr)
+        if X_te is not None:
+            X_te = scaler.transform(X_te)
+            return X_tr, X_te
+        return X_tr
 
-    data.iloc[:, idx_start:idx_end] = StandardScaler().fit_transform(data.iloc[:, idx_start:idx_end])
-    return data
+    scaler = StandardScaler()
+    X_tr.iloc[:, idx_start:idx_end] = scaler.fit_transform(X_tr.iloc[:, idx_start:idx_end])
+    if X_te is not None:
+        X_te.iloc[:, idx_start:idx_end] = scaler.transform(X_te.iloc[:, idx_start:idx_end])
+        return X_tr, X_te
+    return X_tr
 
 
 def oversample(X, y):
@@ -87,13 +107,16 @@ def dummy_code(df, columns):
     return df
 
 
-# TODO remove from here, already in faeture engineering
-def remove_correlated_features(df, threshold, print_features=False):
-    cor_matrix = df.corr().abs()
+# TODO remove from here, already in feature engineering
+def remove_correlated_features(X_tr, X_te=None, threshold=0.95, verbose=False):
+    cor_matrix = X_tr.corr().abs()
     upper_tri = cor_matrix.where(np.triu(np.ones(cor_matrix.shape), k=1).astype(np.bool))
     to_drop = [column for column in upper_tri.columns if np.any(upper_tri[column] > threshold)]
-    if print_features:
+    if verbose:
         print("Correlated Features: ", to_drop)
-    df1 = df.drop(to_drop, axis=1)
-
-    return df1
+    X_tr = X_tr.drop(to_drop, axis=1)
+    if X_te is not None:
+        X_te = X_te.drop(to_drop, axis=1)
+        return X_tr, X_te
+    else:
+        return X_tr

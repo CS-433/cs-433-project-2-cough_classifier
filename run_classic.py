@@ -1,31 +1,52 @@
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as Lda
+
 from src.utils.get_data import import_data
-from src.utils.preprocessing import standard_preprocessing
-from src.utils.feature_engineering import feature_engineering
-from src.utils.model_helpers import AUC_all_models, homemade_all_models
+from src.utils.preprocessing import classic_preprocessing
+from src.utils.train import train_predict
+from src.utils.utils import create_csv_submission
+
+# BEST MODEL PARAMETERS TODO update
+BEST_PARAMS_WITH_METADATA = {
+    'coarse': {'model': Lda(), 'oversampling': True},
+    'fine': {'model': Lda(), 'oversampling': True},
+    'no': {'model': Lda(), 'oversampling': True}
+}
+
+BEST_PARAMS_NO_METADATA = {
+    'coarse': {'model': Lda(), 'oversampling': True},
+    'fine': {'model': Lda(), 'oversampling': True},
+    'no': {'model': Lda(), 'oversampling': True}
+}
+
 DATA_PATH = "./data"
-
-
-
-
+SUBMISSION_PATH = "./data/test/predictions"
 
 if __name__ == "__main__":
-    temp = "coarse"
 
-    # load data
-    samples, labels = import_data(DATA_PATH, segmentation_type = temp, is_user_features=True)
+    for segm_type, param in BEST_PARAMS_WITH_METADATA.items():
+        X_tr, y_tr = import_data(DATA_PATH, segmentation_type=segm_type,
+                                 drop_user_features=False,
+                                 drop_expert=True)
+        X_te = import_data(DATA_PATH, segmentation_type=segm_type,
+                           drop_user_features=False,
+                           drop_expert=True,
+                           is_test=True)
 
-    # TODO since it doesn hav ethis column, for late
-    # TODO make better
-    if temp == "no":
-        samples.index = samples.index.rename('subject')
+        X_tr, X_te = classic_preprocessing(X_tr, X_te)
 
-    ##### preprocessing
-    # TODO -3 because the last three are categorical
-    samples, labels = standard_preprocessing(samples, labels, do_smote=False)
+        y_pred = train_predict(param['model'], X_tr, y_tr, X_te, param=param)
+        create_csv_submission(y_pred, segm_type=segm_type, submission_path=SUBMISSION_PATH, user_features=True)
 
-    #### feature_engeneering
-    samples, labels = feature_engineering(samples, labels)
+    for segm_type, param in BEST_PARAMS_NO_METADATA.items():
+        X_tr, y_tr = import_data(DATA_PATH, segmentation_type=segm_type,
+                                 drop_user_features=True,
+                                 drop_expert=True)
+        X_te = import_data(DATA_PATH, segmentation_type=segm_type,
+                           drop_user_features=True,
+                           drop_expert=True,
+                           is_test=True)
 
-    #### training
-    results = homemade_all_models(samples, labels.Label).rename(columns={'AUC (mean)': "Coarse_AUC"})
-    print(results)
+        X_tr, X_te = classic_preprocessing(X_tr, X_te, dummy=False)
+
+        y_pred = train_predict(param['model'], X_tr, y_tr, X_te, param=param)
+        create_csv_submission(y_pred, segm_type=segm_type, submission_path=SUBMISSION_PATH, user_features=False)

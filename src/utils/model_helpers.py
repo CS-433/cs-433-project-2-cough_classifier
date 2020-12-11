@@ -18,9 +18,11 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
 from src.utils.preprocessing import oversample
 
+
 def weight_reset(m):
     if isinstance(m, torch.nn.Linear):
         m.reset_parameters()
+
 
 def train_test_split(X: pd.DataFrame, y: pd.DataFrame, random_state=42, fraction=0.7):
     """
@@ -189,7 +191,7 @@ def roc_w_cross_val(X, y, classifier, plot=False):
     # ax.legend(loc="lower right")
     ax.legend(bbox_to_anchor=(1, 0), loc="lower left")
 
-    if plot == False:
+    if not plot:
         plt.close()
     else:
         plt.show()
