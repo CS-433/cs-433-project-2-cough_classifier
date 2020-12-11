@@ -4,7 +4,8 @@ FEATURES = {
              'EEPD750_800', 'EEPD800_850', 'EEPD850_900', 'EEPD900_950', 'EEPD950_1000'],
     'SPECTRAL': ['Spectral_Centroid', 'Spectral_Rolloff', 'Spectral_Spread', 'Spectral_Skewness', 'Spectral_Kurtosis',
                  'Spectral_Bandwidth', 'Spectral_Flatness', 'Spectral_StDev', 'Spectral_Slope', 'Spectral_Decrease'],
-    'PSD': ['PSD_225-425', 'PSD_450-550', 'PSD_1325-1600', 'PSD_1600-1900', 'PSD_2500-2900', 'PSD_3100-3700'],
+    'PSD': ['PSD_225-425', 'PSD_450-550', 'PSD_1325-1600', 'PSD_1600-2000', 'PSD_2500-2900', 'PSD_3100-3700'],
+    'PSD_FINE': ['PSD_225-425', 'PSD_450-550', 'PSD_1325-1600', 'PSD_1600-1900', 'PSD_2500-2900', 'PSD_3100-3700'],
     'MFCC': ['MFCC_mean0', 'MFCC_mean1', 'MFCC_mean2', 'MFCC_mean3', 'MFCC_mean4', 'MFCC_mean5', 'MFCC_mean6',
              'MFCC_mean7', 'MFCC_mean8', 'MFCC_mean9', 'MFCC_mean10', 'MFCC_mean11', 'MFCC_mean12', 'MFCC_std0',
              'MFCC_std1', 'MFCC_std2', 'MFCC_std3', 'MFCC_std4', 'MFCC_std5', 'MFCC_std6', 'MFCC_std7', 'MFCC_std8',
@@ -12,6 +13,19 @@ FEATURES = {
     'ADDITIONAL': ['Zero_Crossing_Rate', 'RMS_Power', 'Dominant_Freq', 'Crest_Factor', 'Cough_Length', 'SNR'],
     'METADATA': ['Age', 'Gender', 'Resp_Condition', 'Symptoms'],
 }
+
+ALL_FEATURES_COARSE = FEATURES['EEPD'] + ['Zero_Crossing_Rate', 'RMS_Power', 'Dominant_Freq'] + FEATURES['SPECTRAL'] + \
+                      FEATURES['MFCC'] + ['Crest_Factor', 'Cough_Length'] + FEATURES['PSD'] + ['Expert'] + \
+                      FEATURES['METADATA']
+
+ALL_FEATURES_FINE = FEATURES['EEPD'] + ['Zero_Crossing_Rate', 'RMS_Power', 'Dominant_Freq'] + FEATURES['SPECTRAL'] + \
+                      FEATURES['MFCC'] + ['Crest_Factor', 'Cough_Length'] + FEATURES['PSD_FINE'] + ['Expert'] + \
+                      FEATURES['METADATA']
+
+ALL_FEATURES_NO = FEATURES['EEPD'] + ['Zero_Crossing_Rate', 'RMS_Power', 'Dominant_Freq'] + FEATURES['SPECTRAL'] + \
+                  FEATURES['MFCC'] + ['Crest_Factor', 'Cough_Length', 'SNR'] + FEATURES['PSD'] + ['Expert'] + \
+                  FEATURES['METADATA']
+
 
 SEED = 42
 
@@ -25,4 +39,3 @@ NAIVE_BAYES_PARAMS = {'oversampling': [True, False]}
 DECISION_TREE_PARAMS = {'max_depth': [3, 5, 7], 'oversampling': [True, False]}
 RANDOM_FOREST_PARAMS = {'max_depth': [3, 5, 7], 'n_estimators': [3, 5, 7], 'oversampling': [True, False]}
 GRADIENT_BOOSTING_PARAMS = {'max_depth': [3, 5, 7], 'n_estimators': [3, 5, 7], 'oversampling': [True, False]}
-

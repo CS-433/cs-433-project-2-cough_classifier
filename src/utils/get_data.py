@@ -3,17 +3,10 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
 
-from src.utils.config import FEATURES
-
-FILES = {
-    "fine_segmentation_files": {"samples": "features_fine_segmentation.csv", "labels": "labels_fine_segmentation.csv"},
-    "coarse_segmentation_files": {"samples": "features_coarse_segmentation.csv",
-                                  "labels": "labels_coarse_segmentation.csv"},
-    "no_segmentation_files": {"samples": "features_no_segmentation.csv", "labels": "labels_no_segmentation.csv"}
-}
+from src.utils.config import FEATURES, ALL_FEATURES_COARSE, ALL_FEATURES_FINE, ALL_FEATURES_NO
 
 
-def import_data(path, segmentation_type, drop_user_features=False, return_type='pd', drop_expert=True):
+def import_data(path, segmentation_type, drop_user_features=False, return_type='pd', drop_expert=True, is_test=False):
     """
     Import data
 
@@ -26,6 +19,8 @@ def import_data(path, segmentation_type, drop_user_features=False, return_type='
     :param return_type: 'pd', 'np'
     :param drop_expert: specify if expert column should be dropped
     :type drop_expert: bool
+    :param is_test: specify if expert column should be dropped
+    :type is_test: bool
     :type return_type: str
     :return: dataframes containing features and labels
     """
@@ -36,19 +31,31 @@ def import_data(path, segmentation_type, drop_user_features=False, return_type='
     if return_type not in ['pd', 'np']:
         raise Exception
 
-    df_features = pd.read_csv(f'{path}/features_{segmentation_type}_segmentation.csv', index_col=0)
-    df_labels = pd.read_csv(f'{path}/labels_{segmentation_type}_segmentation.csv', index_col=0)
+    if is_test:
+        if segmentation_type == 'coarse':
+            df_features = pd.read_csv(f'{path}/test/features_test_{segmentation_type}_segmentation.csv',
+                                      index_col=False, names=ALL_FEATURES_COARSE)
+        if segmentation_type == 'fine':
+            df_features = pd.read_csv(f'{path}/test/features_test_{segmentation_type}_segmentation.csv',
+                                      index_col=False, names=ALL_FEATURES_FINE)
+        if segmentation_type == 'no':
+            df_features = pd.read_csv(f'{path}/test/features_test_{segmentation_type}_segmentation.csv',
+                                      index_col=False, names=ALL_FEATURES_NO)
 
-    if segmentation_type in ('fine', 'coarse'):
-        df_features = create_multi_index(df_features)
-        df_labels = create_multi_index(df_labels)
     else:
-        df_features["subject"] = df_features["File_Name"]
-        df_features.set_index("subject", inplace=True)
-        df_labels["subject"] = df_labels["File_Name"]
-        df_labels.set_index("subject", inplace=True)
-        df_features = df_features.drop(["File_Name"], axis=1)
-        df_labels = df_labels.drop(["File_Name"], axis=1)
+        df_features = pd.read_csv(f'{path}/features_{segmentation_type}_segmentation.csv', index_col=0)
+        df_labels = pd.read_csv(f'{path}/labels_{segmentation_type}_segmentation.csv', index_col=0)
+
+        if segmentation_type in ('fine', 'coarse'):
+            df_features = create_multi_index(df_features)
+            df_labels = create_multi_index(df_labels)
+        else:
+            df_features["subject"] = df_features["File_Name"]
+            df_features.set_index("subject", inplace=True)
+            df_features = df_features.drop(["File_Name"], axis=1)
+            df_labels["subject"] = df_labels["File_Name"]
+            df_labels.set_index("subject", inplace=True)
+            df_labels = df_labels.drop(["File_Name"], axis=1)
 
     if drop_expert:
         df_features.drop(['Expert'], axis=1, errors='ignore', inplace=True)
@@ -57,7 +64,12 @@ def import_data(path, segmentation_type, drop_user_features=False, return_type='
         df_features.drop(FEATURES['METADATA'], axis=1, errors='ignore', inplace=True)
 
     if return_type == 'pd':
+        if is_test:
+            return df_features
         return df_features, df_labels
+
+    if is_test:
+        return df_features.values, list(df_features.columns)
 
     subject_indices = get_subjects_indices(df_features.index.get_level_values('subject'))
 
@@ -73,6 +85,7 @@ def create_multi_index(data):
     return data
 
 
+# TODO: delete?
 def expert_models(X, y, oversampling=True):
     # Split the data according to which expert labeled it
     merged = X.merge(y, left_index=True, right_index=True)

@@ -14,6 +14,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import GradientBoostingClassifier
+from src.utils.preprocessing import oversample
 
 from src.utils.model_helpers import cross_val_w_oversampling
 
@@ -58,7 +59,7 @@ def hyperparameter_tuning_cv(model, data, labels, cv_k, params,
                 break
         if model == 'naive_bayes':
             scores_dict = cross_val_w_oversampling(data, labels, k=cv_k, model=GaussianNB(),
-                                         oversampling=param['oversampling'], metrics=metrics)
+                                                   oversampling=param['oversampling'], metrics=metrics)
         if model == 'decision_tree':
             scores_dict = cross_val_w_oversampling(data, labels, k=cv_k,
                                                    model=DecisionTreeClassifier(max_depth=param['max_depth']),
@@ -80,3 +81,13 @@ def hyperparameter_tuning_cv(model, data, labels, cv_k, params,
     df = pd.DataFrame(data=d)
     df.set_index(indexes_list, inplace=True)
     return df
+
+
+def train_predict(model, X_tr, y_tr, X_te, param):
+    if param['oversampling']:
+        X_tr, y_tr = oversample(X_tr, y_tr)
+
+    clf = model.fit(X_tr, y_tr.values.ravel())
+    y_te_prob = pd.DataFrame(clf.predict_proba(X_te), columns=clf.classes_)
+
+    return y_te_prob.iloc[:, 1]
