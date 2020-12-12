@@ -82,14 +82,14 @@ def AUC_all_models(X, y, k=4, oversampling=True):
     models = ["LogisticRegression", "SVM", "LDA", "KNN", "GaussianNB", "DecisionTree", "RandomForest",
               "GradientBoosting"]
 
-    m1 = cross_val_w_oversampling(X, y, LogisticRegression(), oversampling=oversampling)
-    m2 = cross_val_w_oversampling(X, y, SVC(kernel='linear'), oversampling=oversampling)
-    m3 = cross_val_w_oversampling(X, y, Lda(), oversampling=oversampling)
-    m4 = cross_val_w_oversampling(X, y, KNeighborsClassifier(n_neighbors=16), oversampling=oversampling)
-    m5 = cross_val_w_oversampling(X, y, GaussianNB(), oversampling=oversampling)
-    m6 = cross_val_w_oversampling(X, y, DecisionTreeClassifier(random_state=0), oversampling=oversampling)
-    m7 = cross_val_w_oversampling(X, y, RandomForestClassifier(max_depth=7, random_state=0), oversampling=oversampling)
-    m8 = cross_val_w_oversampling(X, y, GradientBoostingClassifier(random_state=0), oversampling=oversampling)
+    m1 = cross_val_w_oversampling(X, y, k, LogisticRegression(), oversampling=oversampling)
+    m2 = cross_val_w_oversampling(X, y, k, SVC(kernel='linear'), oversampling=oversampling)
+    m3 = cross_val_w_oversampling(X, y, k, Lda(), oversampling=oversampling)
+    m4 = cross_val_w_oversampling(X, y, k, KNeighborsClassifier(n_neighbors=16), oversampling=oversampling)
+    m5 = cross_val_w_oversampling(X, y, k, GaussianNB(), oversampling=oversampling)
+    m6 = cross_val_w_oversampling(X, y, k, DecisionTreeClassifier(random_state=0), oversampling=oversampling)
+    m7 = cross_val_w_oversampling(X, y, k, RandomForestClassifier(max_depth=7, random_state=0), oversampling=oversampling)
+    m8 = cross_val_w_oversampling(X, y, k, GradientBoostingClassifier(random_state=0), oversampling=oversampling)
 
     results = [m1, m2, m3, m4, m5, m6, m7, m8]
 
