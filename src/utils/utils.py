@@ -88,7 +88,7 @@ def get_shap_values(model, X_train, X_test, feature_names,
     return shap_df
 
 
-def create_csv_submission(y_pred, segm_type, submission_path, user_features):
+def create_csv_submission(y_pred, segm_type, submission_path, expert, user_features):
     """
     Creates an output file in csv format for submission to kaggle
     Arguments: ids (event ids associated with each prediction)
@@ -100,6 +100,9 @@ def create_csv_submission(y_pred, segm_type, submission_path, user_features):
         metadata = "w_metadata"
     else:
         metadata = "no_metadata"
+
+    if expert:
+        metadata += "_expert_split"
 
     now = datetime.now()
     now_str = now.strftime("%H_%M_%S")

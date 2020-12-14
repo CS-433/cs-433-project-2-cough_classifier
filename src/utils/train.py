@@ -1,4 +1,3 @@
-import itertools
 from collections import defaultdict
 
 import pandas as pd
@@ -14,9 +13,11 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import GradientBoostingClassifier
+
+from get_data import split_experts
 from src.utils.preprocessing import oversample
 
-from src.utils.model_helpers import cross_val_w_oversampling
+from src.utils.model_helpers import cross_val_w_oversampling, ensemble_predictions
 
 
 def hyperparameter_tuning_cv(model, data, labels, cv_k, params,
@@ -83,11 +84,28 @@ def hyperparameter_tuning_cv(model, data, labels, cv_k, params,
     return df
 
 
-def train_predict(model, X_tr, y_tr, X_te, param):
+def train_predict(X_tr, y_tr, X_te, param):
     if param['oversampling']:
         X_tr, y_tr = oversample(X_tr, y_tr)
 
-    clf = model.fit(X_tr, y_tr.values.ravel())
+    clf = param['model'].fit(X_tr, y_tr.values.ravel())
     y_te_prob = pd.DataFrame(clf.predict_proba(X_te), columns=clf.classes_)
 
     return y_te_prob.iloc[:, 1]
+
+
+def train_predict_experts(X_tr, y_tr, X_te, param):
+    if param['oversampling']:
+        X_tr, y_tr = oversample(X_tr, y_tr)
+
+    X_tr_e1, y_tr_e1, X_tr_e2, y_tr_e2, X_tr_e3, y_tr_e3 = split_experts(X_tr, y_tr)
+
+    fit_models = [
+        param['models'][0].fit(X_tr_e1, y_tr_e1.values.ravel()),
+        param['models'][1].fit(X_tr_e2, y_tr_e2.values.ravel()),
+        param['models'][2].fit(X_tr_e3, y_tr_e3.values.ravel())
+    ]
+
+    y_te_prob = ensemble_predictions(fit_models, X_te)
+
+    return y_te_prob[:, 1]

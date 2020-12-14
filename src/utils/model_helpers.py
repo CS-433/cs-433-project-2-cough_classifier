@@ -200,13 +200,13 @@ def roc_w_cross_val(X, y, classifier, plot=False):
     return mean_auc
 
 
-# TODO: add and test to run classical
 # make an ensemble prediction for multi-class classification
 # source: https://machinelearningmastery.com/weighted-average-ensemble-for-deep-learning-neural-networks/
-def ensemble_predictions(members, X_te):
+def ensemble_predictions(members, X_te, weights=None):
     # make predictions
     y_preds = np.array([model.predict_proba(X_te) for model in members])
-    print(y_preds)
-    # mean across ensemble members, argmax across classes
-    y_ensemble_pred = np.argmax(np.mean(y_preds, axis=0), axis=1)
+
+    # mean across ensemble members
+    y_ensemble_pred = np.average(y_preds, weights=weights, axis=0)
+
     return y_ensemble_pred
