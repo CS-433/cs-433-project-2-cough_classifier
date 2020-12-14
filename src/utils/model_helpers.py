@@ -88,7 +88,8 @@ def AUC_all_models(X, y, k=4, oversampling=True):
     m4 = cross_val_w_oversampling(X, y, k, KNeighborsClassifier(n_neighbors=16), oversampling=oversampling)
     m5 = cross_val_w_oversampling(X, y, k, GaussianNB(), oversampling=oversampling)
     m6 = cross_val_w_oversampling(X, y, k, DecisionTreeClassifier(random_state=0), oversampling=oversampling)
-    m7 = cross_val_w_oversampling(X, y, k, RandomForestClassifier(max_depth=7, random_state=0), oversampling=oversampling)
+    m7 = cross_val_w_oversampling(X, y, k, RandomForestClassifier(max_depth=7, random_state=0),
+                                  oversampling=oversampling)
     m8 = cross_val_w_oversampling(X, y, k, GradientBoostingClassifier(random_state=0), oversampling=oversampling)
 
     results = [m1, m2, m3, m4, m5, m6, m7, m8]
@@ -197,3 +198,15 @@ def roc_w_cross_val(X, y, classifier, plot=False):
         plt.show()
 
     return mean_auc
+
+
+# TODO: add and test to run classical
+# make an ensemble prediction for multi-class classification
+# source: https://machinelearningmastery.com/weighted-average-ensemble-for-deep-learning-neural-networks/
+def ensemble_predictions(members, X_te):
+    # make predictions
+    y_preds = np.array([model.predict_proba(X_te) for model in members])
+    print(y_preds)
+    # mean across ensemble members, argmax across classes
+    y_ensemble_pred = np.argmax(np.mean(y_preds, axis=0), axis=1)
+    return y_ensemble_pred
