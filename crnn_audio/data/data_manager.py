@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 from src.utils.get_data import import_data
 from crnn_audio.data.data_sets import FolderDataset
 from crnn_audio.utils.util import load_audio
+import pandas as pd
 
 
 class CSVDataManager(object):
@@ -40,6 +41,15 @@ class CSVDataManager(object):
     def _split_data(self, df):
         ret = {"train": [], "val": []}
         df_tr, df_val = train_test_split(df, test_size=0.3, random_state=42)
+
+        # oversampling to deal with class imbalance
+        lst = [df_tr]
+        max_size = df_tr['cough_type'].value_counts().max()
+        for class_index, group in df_tr.groupby('cough_type'):
+            lst.append(group.sample(max_size - len(group), replace=True))
+        df_tr = pd.concat(lst)
+        df_tr = df_tr.sample(frac=1)
+
         for row in df_tr[['Label', 'cough_type']].iterrows():
             f_name = os.path.join(self.dir_path, 'wav_data', f'{row[0]}.wav')
             ret["train"].append(
@@ -54,11 +64,6 @@ class CSVDataManager(object):
         assert name in self.data_splits
         dataset = FolderDataset(
             self.data_splits[name], load_func=self.load_func, transforms=transfs)
-
-        # counts = np.bincount(y)
-        # labels_weights = 1. / counts
-        # weights = labels_weights[y]
-        # sampler = torch.utils.data.sampler.WeightedRandomSampler(weights, len(weights), replacement=True)
 
         return tdata.DataLoader(dataset=dataset, **self.loader_params, collate_fn=self.pad_seq)
 

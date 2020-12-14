@@ -27,7 +27,7 @@ class ClassificationEvaluator(object):
 
                 output = self.model(data)
 
-                self.model.classes
+                # self.model.classes
                 batch_size = data[0].size(0)
 
                 if debug:
@@ -38,7 +38,7 @@ class ClassificationEvaluator(object):
 
             size = len(self.data_loader.dataset)
             ret = {met.__name__: "%.3f" % (
-                    total_metrics[i].item() / size) for i, met in enumerate(metrics)}
+                total_metrics[i].item() / size) for i, met in enumerate(metrics)}
             return ret
 
     def _store_batch(self, data, batch_size, output, target):
@@ -55,7 +55,7 @@ class ClassificationEvaluator(object):
         for i in range(batch_size):
             if inds[i] == target[i]:
                 label = self.model.classes[inds[i]]
-                pred_txt = "%s (%.1f%%)" % (label, 100 * confs[inds[i]])
+                pred_txt = "%s (%.1f%%)" % (label, 100*confs[inds[i]])
                 out_path = os.path.join(path, '%s.png' % i)
                 plot_heatmap(spec[i][..., :lengths[i]].cpu().numpy(),
                              out_path,

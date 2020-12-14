@@ -42,9 +42,6 @@ def eval_main(checkpoint):
     m_name, sd, classes = _get_model_att(checkpoint)
     model = getattr(net_module, m_name)(classes, config, state_dict=sd)
 
-    print("model")
-    print(model)
-
     model.load_state_dict(checkpoint['state_dict'])
 
     num_classes = len(classes)
@@ -135,7 +132,7 @@ def _test_loader(config):
     tsf = _get_transform(config, 'train')
     data_manager = getattr(data_module, config['data']['type'])(config['data'])
     loader = data_manager.get_loader('train', tsf)
-    print(tsf.transfs)
+    # print(tsf.transfs)
     for batch in loader:
         print(disp_batch([batch[0], batch[-1]]))
 
@@ -176,7 +173,8 @@ if __name__ == '__main__':
         train_main(config, args.resume)
 
     elif args.action == 'eval':
-        eval_main(checkpoint)
+        results_eval = eval_main(checkpoint)
+        print(results_eval)
 
     elif args.action == 'testloader':
         _test_loader(config)
