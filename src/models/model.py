@@ -26,7 +26,6 @@ class BinaryClassification(nn.Module):
         if activation_function == "relu":
             self.activation_function = nn.ReLU()
 
-
         self.batchnorms = nn.ModuleList([nn.BatchNorm1d(dims[i + 1]) for i in range(len(dims) - 2)])
 
         self.dropout = nn.Dropout(p=dropout)
@@ -40,7 +39,6 @@ class BinaryClassification(nn.Module):
         Returns:
             x (torch.tensor): predictions
         """
-        #print(x)
         for indx, layer in enumerate(self.linear_layers[:-1]):
             x = self.activation_function(layer(x))
             x = self.batchnorms[indx](x)

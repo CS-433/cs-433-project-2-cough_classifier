@@ -1,12 +1,8 @@
 import os
 import errno
-from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
 import soundfile as sf
-from matplotlib.ticker import LogLocator
-from matplotlib.colors import LogNorm
-from matplotlib import cm
 
 
 def mkdir_p(path):
@@ -40,23 +36,18 @@ def setup_logging(logging_path='logs'):
 def list_dir(path):
     filter_dir = lambda x: os.path.isdir(os.path.join(path, x))
     filter_file = lambda x: os.path.isfile(os.path.join(path, x)) and not x.startswith('.') \
-                            and not x.split('.')[-1] in ['pyc', 'py', 'txt']
+        and not x.split('.')[-1] in ['pyc', 'py', 'txt']
 
     ret = [n for n in os.listdir(path) if filter_dir(n) or filter_file(n)]
 
     return ret
 
 
-def load_image(path):
-    # return cv2.imread(path)[...,::-1]
-    return Image.open(path)
-
-
 def load_audio(path):
     return sf.read(path)
 
 
-def plot_heatmap(arr, fname, pred=''):
+def plot_heatmap(arr, f_name, pred=''):
     arr = np.flip(arr.mean(0), axis=0)
     fig = plt.figure(figsize=(15, 10))
     ax = fig.add_subplot(111)
@@ -71,5 +62,5 @@ def plot_heatmap(arr, fname, pred=''):
             verticalalignment='top',
             horizontalalignment='right',
             transform=ax.transAxes)
-    plt.savefig(fname, format='png')
+    plt.savefig(f_name, format='png')
     plt.close()

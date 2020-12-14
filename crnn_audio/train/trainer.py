@@ -1,6 +1,5 @@
 import numpy as np
 import torch
-from torchvision.utils import make_grid
 from .base_trainer import BaseTrainer
 
 from tqdm import tqdm
@@ -62,13 +61,13 @@ class Trainer(BaseTrainer):
 
         for batch_idx, batch in enumerate(_trange):
             batch = [b.to(self.device) for b in batch]
-            data, target = batch[:-1], batch[-1]
+            data = batch[:-1]
+            target = batch[-1]
             data = data if len(data) > 1 else data[0]
             # data, target = data.to(self.device), target.to(self.device)
 
             self.optimizer.zero_grad()
             output = self.model(data)
-
             loss = self.loss(output, target)
             loss.backward()
             self.optimizer.step()
@@ -89,9 +88,6 @@ class Trainer(BaseTrainer):
         self.writer.add_scalar('loss', loss)
         for i, metric in enumerate(self.metrics):
             self.writer.add_scalar("%s" % metric.__name__, metrics[i])
-
-        if self.config['data']['format'] == 'image':
-            self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
 
         log = {
             'loss': loss,
@@ -128,8 +124,8 @@ class Trainer(BaseTrainer):
                 batch = [b.to(self.device) for b in batch]
                 data, target = batch[:-1], batch[-1]
                 data = data if len(data) > 1 else data[0]
-
                 output = self.model(data)
+
                 loss = self.loss(output, target)
 
                 # self.writer.set_step((epoch - 1) * len(self.valid_data_loader) + batch_idx, 'valid')
@@ -138,24 +134,13 @@ class Trainer(BaseTrainer):
                 total_val_loss += loss.item()
                 total_val_metrics += self._eval_metrics(output, target)
 
-                # self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
-
             # Add epoch metrics
             val_loss = total_val_loss / len(self.valid_data_loader)
             val_metrics = (total_val_metrics / len(self.valid_data_loader)).tolist()
 
-            # DELETE THIS SHIT
-            ret = 0
-
             self.writer.add_scalar('loss', val_loss)
             for i, metric in enumerate(self.metrics):
                 self.writer.add_scalar("%s" % metric.__name__, val_metrics[i])
-
-                # DELETE THIS SHIT
-                if metric.__name__ == 'val_accuracy': ret = val_metrics[i]
-
-            if self.config['data']['format'] == 'image':
-                self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
 
             # for name, param in self.model.named_parameters():
             #    if param.requires_grad:

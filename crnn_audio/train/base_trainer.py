@@ -85,7 +85,7 @@ class BaseTrainer:
             # metrics ("val_metrics") and other key,value pairs. Store/update them in log.
             result = self._train_epoch(epoch)
 
-            # save logged informations into log dict
+            # save logged information into log dict
             log = {'epoch': epoch}
             for key, value in result.items():
                 if key == 'metrics':
@@ -97,7 +97,7 @@ class BaseTrainer:
 
             c_lr = self.optimizer.param_groups[0]['lr']
 
-            # print logged informations to the screen
+            # print logged information to the screen
             if self.train_logger is not None:
                 self.train_logger.add_entry(log)
                 if self.verbosity >= 1:

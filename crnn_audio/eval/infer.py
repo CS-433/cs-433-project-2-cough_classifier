@@ -3,7 +3,7 @@ from crnn_audio.utils import plot_heatmap
 from crnn_audio.net import MelspectrogramStretch
 import os
 import torch
-from crnn_audio.utils.util import load_image, load_audio
+from crnn_audio.utils.util import load_audio
 
 
 class AudioInference:

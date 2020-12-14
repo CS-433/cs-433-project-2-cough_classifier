@@ -52,7 +52,7 @@ def eval_main(checkpoint):
 
     evaluation = ClassificationEvaluator(test_loader, model)
     ret = evaluation.evaluate(metrics, debug=False)
-    print(ret)
+
     return ret
 
 

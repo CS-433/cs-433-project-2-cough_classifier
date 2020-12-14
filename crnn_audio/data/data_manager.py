@@ -6,14 +6,13 @@ from sklearn.model_selection import train_test_split
 
 from src.utils.get_data import import_data
 from crnn_audio.data.data_sets import FolderDataset
-from crnn_audio.utils.util import load_image, load_audio
+from crnn_audio.utils.util import load_audio
 
 
 class CSVDataManager(object):
 
     def __init__(self, config):
         load_formats = {
-            'image': load_image,
             'audio': load_audio
         }
 
@@ -30,7 +29,7 @@ class CSVDataManager(object):
                                                                 axis=1)
         self.classes = self._get_classes(
             self.metadata_df[['cough_type', 'Label']])
-        self.data_splits = self._10kfold_split(self.metadata_df)
+        self.data_splits = self._split_data(self.metadata_df)
 
     @staticmethod
     def _get_classes(df):
@@ -38,24 +37,28 @@ class CSVDataManager(object):
         idx_col = df.columns[1]
         return df.drop_duplicates().sort_values(idx_col)[c_col].unique()
 
-    def _10kfold_split(self, df):
+    def _split_data(self, df):
         ret = {"train": [], "val": []}
-        # df_train = self.metadata_df.iloc[0:int(0.9 * len(self.metadata_df))]
-        df_tr, df_val = train_test_split(df, test_size=0.1, random_state=42)
+        df_tr, df_val = train_test_split(df, test_size=0.3, random_state=42)
         for row in df_tr[['Label', 'cough_type']].iterrows():
-            fname = os.path.join(self.dir_path, 'wav_data', f'{row[0]}.wav')
+            f_name = os.path.join(self.dir_path, 'wav_data', f'{row[0]}.wav')
             ret["train"].append(
-                {'path': fname, 'class': row[1]['cough_type'], 'class_idx': row[1]['Label']})
+                {'path': f_name, 'class': row[1]['cough_type'], 'class_idx': row[1]['Label']})
         for row in df_val[['Label', 'cough_type']].iterrows():
-            fname = os.path.join(self.dir_path, 'wav_data', f'{row[0]}.wav')
+            f_name = os.path.join(self.dir_path, 'wav_data', f'{row[0]}.wav')
             ret["val"].append(
-                {'path': fname, 'class': row[1]['cough_type'], 'class_idx': row[1]['Label']})
+                {'path': f_name, 'class': row[1]['cough_type'], 'class_idx': row[1]['Label']})
         return ret
 
     def get_loader(self, name, transfs):
         assert name in self.data_splits
         dataset = FolderDataset(
             self.data_splits[name], load_func=self.load_func, transforms=transfs)
+
+        # counts = np.bincount(y)
+        # labels_weights = 1. / counts
+        # weights = labels_weights[y]
+        # sampler = torch.utils.data.sampler.WeightedRandomSampler(weights, len(weights), replacement=True)
 
         return tdata.DataLoader(dataset=dataset, **self.loader_params, collate_fn=self.pad_seq)
 
