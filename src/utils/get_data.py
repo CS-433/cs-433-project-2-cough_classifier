@@ -118,6 +118,7 @@ def expert_models(X, y, oversampling=True):
     return results
 
 
+# TODO: simplify split function
 def split_experts(X, y):
     merged = X.merge(y, left_index=True, right_index=True)
 

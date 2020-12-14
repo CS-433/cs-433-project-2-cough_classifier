@@ -28,7 +28,7 @@ BEST_PARAMS_EXPERTS_NO_METADATA = {
             LogisticRegression(max_iter=10000),
             LogisticRegression(max_iter=10000)
         ],
-        'oversampling': True
+        'oversampling': True,
     },
     'fine': {
         'models': [
@@ -36,7 +36,7 @@ BEST_PARAMS_EXPERTS_NO_METADATA = {
             LogisticRegression(max_iter=10000),
             LogisticRegression(max_iter=10000)
         ],
-        'oversampling': True
+        'oversampling': True,
     },
     'no': {
         'models': [
@@ -44,9 +44,11 @@ BEST_PARAMS_EXPERTS_NO_METADATA = {
             LogisticRegression(max_iter=10000),
             LogisticRegression(max_iter=10000)
         ],
-        'oversampling': True
-    }
+        'oversampling': True,
+    },
 }
+
+ENSEMBLE_TYPE = "weighted"
 
 DATA_PATH = "./data"
 SUBMISSION_PATH = "./data/test/predictions_classical"
@@ -100,6 +102,18 @@ if __name__ == "__main__":
         X_tr.drop(['Expert'], axis=1, inplace=True)
 
         X_tr, X_te = classic_preprocessing(X_tr, X_te, stop=None, dummy=False)
+
+        if ENSEMBLE_TYPE == "weighted":
+            param["ensemble"] = {
+                "type": "weighted",
+                "weights": None,
+            }
+        else:
+            param["ensemble"] = {
+                "type": "stacked",
+                "X_tr": X_tr,
+                "y_tr": y_tr
+            }
 
         X_tr['Expert'] = expert_col
 

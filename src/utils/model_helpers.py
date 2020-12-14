@@ -14,7 +14,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as Lda
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, StackingClassifier
 
 from src.utils.preprocessing import oversample
 
@@ -202,11 +202,26 @@ def roc_w_cross_val(X, y, classifier, plot=False):
 
 # make an ensemble prediction for multi-class classification
 # source: https://machinelearningmastery.com/weighted-average-ensemble-for-deep-learning-neural-networks/
-def ensemble_predictions(members, X_te, weights=None):
+def ensemble_predictions(members, X_te, params):
+    assert params["type"] in ("weighted", "stacked")
     # make predictions
-    y_preds = np.array([model.predict_proba(X_te) for model in members])
+    if params["type"] == "weighted":
+        y_preds = np.array([model.predict_proba(X_te) for model in members])
 
-    # mean across ensemble members
-    y_ensemble_pred = np.average(y_preds, weights=weights, axis=0)
+        # mean across ensemble members
+        y_ensemble_pred = np.average(y_preds, weights=params["weights"], axis=0)
+    else:
+        estimators = [(f'expert_{i}', members[i]) for i in range(len(members))]
+
+        # TODO: correct bug -> only final estimator should be fitted here
+        clf = StackingClassifier(
+            estimators=estimators, final_estimator=LogisticRegression())
+        X_tr = params["X_tr"]
+        print(X_tr.columns.tolist())
+        y_tr = params["y_tr"]
+
+        clf.fit(X_tr, y_tr.values.ravel())
+
+        y_ensemble_pred = clf.predict_proba(X_te)
 
     return y_ensemble_pred

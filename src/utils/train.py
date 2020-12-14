@@ -106,6 +106,6 @@ def train_predict_experts(X_tr, y_tr, X_te, param):
         param['models'][2].fit(X_tr_e3, y_tr_e3.values.ravel())
     ]
 
-    y_te_prob = ensemble_predictions(fit_models, X_te)
+    y_te_prob = ensemble_predictions(fit_models, X_te, params=param["ensemble"])
 
     return y_te_prob[:, 1]
