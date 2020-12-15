@@ -1,5 +1,6 @@
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as Lda
-from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from src.utils.get_data import import_data
 from src.utils.preprocessing import classic_preprocessing
@@ -16,9 +17,9 @@ BEST_PARAMS_NO_METADATA = {
 BEST_PARAMS_EXPERTS_NO_METADATA = {
     'coarse': {
         'models': [
-            SVC(kernel='linear', gamma=0.1),
-            SVC(kernel='rbf', gamma=0.1),
-            SVC(kernel='rbf', gamma=0.1)
+            SVC(kernel='linear', gamma=0.1, probability=True),
+            SVC(kernel='rbf', gamma=0.1, probability=True),
+            SVC(kernel='rbf', gamma=0.1, probability=True)
         ],
         'oversampling': True,
     },
@@ -32,23 +33,20 @@ BEST_PARAMS_EXPERTS_NO_METADATA = {
     },
     'no': {
         'models': [
-            SVC(kernel='linear', gamma=0.1),
-            SVC(kernel='rbf', gamma=0.01),
-            SVC(kernel='rbf', gamma=0.01)
+            SVC(kernel='linear', gamma=0.1, probability=True),
+            SVC(kernel='rbf', gamma=0.01, probability=True),
+            SVC(kernel='rbf', gamma=0.01, probability=True)
         ],
         'oversampling': True,
     },
 }
 
-
-# TODO: fill real params
 BEST_PARAMS_WITH_METADATA = {
     'coarse': {'model': KNeighborsClassifier(n_neighbors=4), 'oversampling': True},
     'fine': {'model': KNeighborsClassifier(n_neighbors=4), 'oversampling': True},
     'no': {'model': Lda(), 'oversampling': True}
 }
 
-# TODO: fill real params
 BEST_PARAMS_EXPERTS_WITH_METADATA = {
     'coarse': {
         'models': [
