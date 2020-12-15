@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import torch
-from src.utils.model_helpers import AUC_all_models
 from torch.utils.data import Dataset, DataLoader
 
 from src.utils.config import FEATURES, ALL_FEATURES_COARSE, ALL_FEATURES_FINE, ALL_FEATURES_NO
@@ -10,7 +9,6 @@ from src.utils.config import FEATURES, ALL_FEATURES_COARSE, ALL_FEATURES_FINE, A
 def import_data(path, segmentation_type, drop_user_features=False, return_type='pd', drop_expert=True, is_test=False):
     """
     Import data
-
     :param path: path of data
     :type path: str
     :param segmentation_type: 'no', 'coarse', or 'fine'
@@ -86,40 +84,16 @@ def create_multi_index(data):
     return data
 
 
-# TODO: delete?
-def expert_models(X, y, oversampling=True):
-    # Split the data according to which expert labeled it
-    merged = X.merge(y, left_index=True, right_index=True)
-
-    X_exp_1 = merged[merged['Expert'] == 1].iloc[:, :-1].drop(columns=['Expert'], axis=1)
-    y_exp_1 = merged[merged['Expert'] == 1].iloc[:, -1]
-
-    X_exp_2 = merged[merged['Expert'] == 2].iloc[:, :-1].drop(columns=['Expert'], axis=1)
-    y_exp_2 = merged[merged['Expert'] == 2].iloc[:, -1]
-
-    X_exp_3 = merged[merged['Expert'] == 3].iloc[:, :-1].drop(columns=['Expert'], axis=1)
-    y_exp_3 = merged[merged['Expert'] == 3].iloc[:, -1]
-
-    # All expert groups are about 1000 samples big
-    # print(len(X_exp_1), len(X_exp_2), len(X_exp_3))
-
-    # Train all models for all experts
-    exp_1 = AUC_all_models(X_exp_1, y_exp_1, k=6, oversampling=oversampling)
-    exp_2 = AUC_all_models(X_exp_2, y_exp_2, k=6, oversampling=oversampling)
-    exp_3 = AUC_all_models(X_exp_3, y_exp_3, k=6, oversampling=oversampling)
-
-    # Gather the results in a df
-    exp_1 = exp_1.rename(columns={'AUC (mean)': "Exp_1_AUC"})
-    exp_2 = exp_2.rename(columns={'AUC (mean)': "Exp_2_AUC"})
-    exp_3 = exp_3.rename(columns={'AUC (mean)': "Exp_3_AUC"})
-
-    results = pd.concat([exp_1, exp_2["Exp_2_AUC"], exp_3["Exp_3_AUC"]], axis=1, sort=False)
-
-    return results
-
-
 # TODO: simplify split function
 def split_experts(X, y):
+    """
+    Import data
+    :param X: traning data
+    :type X: pd.Dataframe
+    :param y: labels
+    :type y: pd.Dataframe
+    :return: splited data and labels for each expert
+    """
     merged = X.merge(y, left_index=True, right_index=True)
 
     X_exp_1 = merged[merged['Expert'] == 1].iloc[:, :-1].drop(columns=['Expert'], axis=1)

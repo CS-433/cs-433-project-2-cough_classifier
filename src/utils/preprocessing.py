@@ -5,6 +5,26 @@ from imblearn.over_sampling import SMOTE
 
 
 def classic_preprocessing(X_tr, X_te=None, start=0, stop=-3, thresh=0.95, norm=True, dummy=True, drop_corr=True):
+    """
+    Do all the preprocessing at once
+    :param X_tr: dataframe
+    :type X_tr: pd.DataFrame
+    :param X_te: test data
+    :type X_te: pd.DataFrame
+    :param start: start index
+    :type start: int
+    :param stop: end index
+    :type stop: int
+    :param threshold: threshold for correlation
+    :type X_te: float
+    :param norm: do normalisation
+    :type norm: boolean
+    :param dummy: do dummy coding
+    :type dummy: boolean
+    :param drop_cor: drop correlated features
+    :type drop_cor: boolean
+    :return: preprocessed dataframe
+    """
     if norm:
         if X_te is not None:
             X_tr, X_te = standardize(X_tr, X_te, idx_start=start, idx_end=stop)
@@ -29,6 +49,22 @@ def classic_preprocessing(X_tr, X_te=None, start=0, stop=-3, thresh=0.95, norm=T
 def standard_preprocessing(samples, labels, do_standardize=True,
                            do_smote=True, do_dummy_coding=True,
                            categorical_features=['Gender', 'Resp_Condition', 'Symptoms']):
+    """
+    Do all the standard preprocessing at once
+    :param samples: dataframe
+    :type samples: pd.DataFrame
+    :param labels: test data
+    :type labels: pd.DataFrame
+    :param do_standardize: do standardisation
+    :type do_standardize: boolean
+    :param do_smote: do oversampling with SMOTE
+    :type do_smote: boolean
+    :param do_dummy_coding: do dummy coding
+    :type do_dummy_coding: boolean
+    :param categorical_features: features to dummy code
+    :type categorical_features: list
+    :return: preprocessed dataframe
+    """
     if do_standardize:
         # standardize all non categorical features
         samples = standardize(samples, None, 0, -len(categorical_features))
@@ -109,6 +145,18 @@ def dummy_code(df, columns):
 
 # TODO remove from here, already in feature engineering
 def remove_correlated_features(X_tr, X_te=None, threshold=0.95, verbose=False):
+    """
+    Remove features with correlation > threshold
+    :param X_tr: training data
+    :type X_tr: pd.DataFrame
+    :param X_te: test data
+    :type X_te: pd.DataFrame
+    :param threshold: threshold for correlation
+    :type X_te: float
+    :param verbose: print removed features
+    :type verbose: boolean
+    :return: dataframe with correlated features removed
+    """
     cor_matrix = X_tr.corr().abs()
     upper_tri = cor_matrix.where(np.triu(np.ones(cor_matrix.shape), k=1).astype(np.bool))
     to_drop = [column for column in upper_tri.columns if np.any(upper_tri[column] > threshold)]

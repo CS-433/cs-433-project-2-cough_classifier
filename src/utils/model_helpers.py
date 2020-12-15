@@ -1,12 +1,11 @@
 # Define a function that automatically plots the AUC curve for a given classifier
-from collections import defaultdict
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+from collections import defaultdict
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import GroupShuffleSplit
-
 from sklearn.metrics import plot_roc_curve, auc, roc_auc_score, f1_score, accuracy_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
@@ -15,7 +14,6 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, StackingClassifier
-
 from src.utils.preprocessing import oversample
 
 
@@ -78,28 +76,11 @@ def cross_validation(data, labels, k, model, metric):
     return np.mean(metric_list)
 
 
-def AUC_all_models(X, y, k=4, oversampling=True):
-    models = ["LogisticRegression", "SVM", "LDA", "KNN", "GaussianNB", "DecisionTree", "RandomForest",
-              "GradientBoosting"]
-
-    m1 = cross_val_w_oversampling(X, y, k, LogisticRegression(), oversampling=oversampling)
-    m2 = cross_val_w_oversampling(X, y, k, SVC(kernel='linear'), oversampling=oversampling)
-    m3 = cross_val_w_oversampling(X, y, k, Lda(), oversampling=oversampling)
-    m4 = cross_val_w_oversampling(X, y, k, KNeighborsClassifier(n_neighbors=16), oversampling=oversampling)
-    m5 = cross_val_w_oversampling(X, y, k, GaussianNB(), oversampling=oversampling)
-    m6 = cross_val_w_oversampling(X, y, k, DecisionTreeClassifier(random_state=0), oversampling=oversampling)
-    m7 = cross_val_w_oversampling(X, y, k, RandomForestClassifier(max_depth=7, random_state=0),
-                                  oversampling=oversampling)
-    m8 = cross_val_w_oversampling(X, y, k, GradientBoostingClassifier(random_state=0), oversampling=oversampling)
-
-    results = [m1, m2, m3, m4, m5, m6, m7, m8]
-
-    d = {'Models': models, 'AUC (mean)': results}
-
-    return pd.DataFrame(data=d)
-
-
 def cross_val_w_oversampling(X, y, k, model, oversampling=True, metrics=[f1_score, roc_auc_score, accuracy_score]):
+    """
+    oversample the training data and perform k-fold cross-validation after dividing the training data into k folds, 
+    grouped by subjects
+    """
     groups = X.index
     gss = GroupShuffleSplit(n_splits=k, train_size=.7, random_state=42)
     gss.get_n_splits()
@@ -126,78 +107,6 @@ def cross_val_w_oversampling(X, y, k, model, oversampling=True, metrics=[f1_scor
         return_dict[metric.__name__] = float(np.mean(metric_dict[metric.__name__]))
 
     return return_dict
-
-
-# TODO: delete this function
-def homemade_all_models(X, y, k=4):
-    models = ["LogisticRegression", "SVM", "LDA", "KNN", "GaussianNB", "DecisionTree", "RandomForest",
-              "GradientBoosting"]
-
-    m1 = cross_validation(X, y, k, LogisticRegression(), metric=roc_auc_score)
-    m2 = cross_validation(X, y, k, SVC(kernel='linear'), metric=roc_auc_score)
-    m3 = cross_validation(X, y, k, Lda(), metric=roc_auc_score)
-    m4 = cross_validation(X, y, k, KNeighborsClassifier(n_neighbors=16), metric=roc_auc_score)
-    m5 = cross_validation(X, y, k, GaussianNB(), metric=roc_auc_score)
-    m6 = cross_validation(X, y, k, DecisionTreeClassifier(random_state=0), metric=roc_auc_score)
-    m7 = cross_validation(X, y, k, RandomForestClassifier(max_depth=7, random_state=0), metric=roc_auc_score)
-    m8 = cross_validation(X, y, k, GradientBoostingClassifier(random_state=0), metric=roc_auc_score)
-
-    results = [m1, m2, m3, m4, m5, m6, m7, m8]
-
-    d = {'models': models, 'AUC (mean)': results}
-
-    return pd.DataFrame(data=d)
-
-
-def roc_w_cross_val(X, y, classifier, plot=False):
-    cv = StratifiedKFold(n_splits=6)
-
-    X = X.to_numpy()
-    y = y.to_numpy()
-    tprs = []
-    aucs = []
-    mean_fpr = np.linspace(0, 1, 100)
-
-    fig, ax = plt.subplots()
-
-    for i, (train, test) in enumerate(cv.split(X, y)):
-        classifier.fit(X[train], y[train])
-        viz = plot_roc_curve(classifier, X[test], y[test],
-                             name='ROC fold {}'.format(i),
-                             alpha=0.3, lw=1, ax=ax)
-        interp_tpr = np.interp(mean_fpr, viz.fpr, viz.tpr)
-        interp_tpr[0] = 0.0
-        tprs.append(interp_tpr)
-        aucs.append(viz.roc_auc)
-
-    mean_tpr = np.mean(tprs, axis=0)
-    mean_tpr[-1] = 1.0
-    mean_auc = auc(mean_fpr, mean_tpr)
-    std_auc = np.std(aucs)
-
-    ax.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r',
-            label='Chance', alpha=.8)
-    ax.plot(mean_fpr, mean_tpr, color='b',
-            label=r'Mean ROC (AUC = %0.2f $\pm$ %0.2f)' % (mean_auc, std_auc),
-            lw=2, alpha=.8)
-
-    std_tpr = np.std(tprs, axis=0)
-    tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
-    tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
-
-    ax.fill_between(mean_fpr, tprs_lower, tprs_upper, color='grey', alpha=.2,
-                    label=r'$\pm$ 1 std. dev.')
-    ax.set(xlim=[-0.05, 1.05], ylim=[-0.05, 1.05],
-           title="Receiver operating characteristic example")
-    # ax.legend(loc="lower right")
-    ax.legend(bbox_to_anchor=(1, 0), loc="lower left")
-
-    if not plot:
-        plt.close()
-    else:
-        plt.show()
-
-    return mean_auc
 
 
 # make an ensemble prediction for multi-class classification

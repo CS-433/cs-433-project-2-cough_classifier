@@ -1,9 +1,5 @@
-from collections import defaultdict
-
 import pandas as pd
-
-# Standard ML models
-from sklearn.metrics import roc_auc_score, f1_score, accuracy_score
+from sklearn.metrics import roc_auc_score, f1_score, accuracy_score, explained_variance_score
 from sklearn.model_selection import ParameterGrid
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
@@ -13,17 +9,31 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import GradientBoostingClassifier
-
-from get_data import split_experts
+from src.utils.get_data import split_experts
 from src.utils.preprocessing import oversample
-
 from src.utils.model_helpers import cross_val_w_oversampling, ensemble_predictions
-
+from collections import defaultdict
 
 def hyperparameter_tuning_cv(model, data, labels, cv_k, params,
-                             metrics=[f1_score, roc_auc_score, accuracy_score]) -> pd.DataFrame:
+                             metrics=[f1_score, roc_auc_score, accuracy_score, explained_variance_score]) -> pd.DataFrame:
     implemented_models = (
         'knn', 'logistic', 'lda', 'svc', 'naive_bayes', 'decision_tree', 'random_forest', 'gradient_boosting')
+    """
+    Train the classical models hyperparameters with cross validation
+    :param model: model to tune
+    :type model: str
+    :param data: data
+    :type data: pd.DataFrame
+    :param labels: true labels
+    :type labels: pd.DataFrame
+    :param cv_k: cv folds
+    :type cv_k: int
+    :param params: parameters to tune
+    :type params: dictionary
+    :param metrics: metrics for evaluation
+    :type metrics: list
+    :return: dataframe with evaluated parameters and metrics
+    """
 
     assert model in implemented_models, "model does not exist"
 

@@ -31,7 +31,6 @@ CATEGORICAL_COLS = ['Expert', 'Age', 'Gender', 'Resp_Condition', 'Symptoms']
 SEED = 42
 
 # GRID SEARCH PARAMETERS - STANDARD MODELS
-
 KNN_PARAMS = {'n_neighbors': list(range(1, 16)), 'oversampling': [True, False]}
 LOGISTIC_PARAMS = {'max_iter': [10000, 100000], 'oversampling': [True, False]}
 LDA_PARAMS = {'oversampling': [True, False]}

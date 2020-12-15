@@ -8,41 +8,69 @@ from src.utils.utils import create_csv_submission
 
 # BEST MODEL PARAMETERS
 BEST_PARAMS_NO_METADATA = {
-    'coarse': {'model': KNeighborsClassifier(n_neighbors=1), 'oversampling': True},
-    'fine': {'model': LogisticRegression(max_iter=10000), 'oversampling': True},
-    'no': {'model': Lda(), 'oversampling': True}
-}
-
-# TODO: fill real params
-BEST_PARAMS_WITH_METADATA = {
     'coarse': {'model': Lda(), 'oversampling': True},
-    'fine': {'model': Lda(), 'oversampling': True},
-    'no': {'model': Lda(), 'oversampling': True}
+    'fine': {'model': KNeighborsClassifier(n_neighbors=4), 'oversampling': True},
+    'no': {'model': GaussianNB(), 'oversampling': True}
 }
 
-# TODO: fill real params
 BEST_PARAMS_EXPERTS_NO_METADATA = {
     'coarse': {
         'models': [
-            LogisticRegression(max_iter=10000),
-            LogisticRegression(max_iter=10000),
-            LogisticRegression(max_iter=10000)
+            SVC(kernel='linear', gamma=0.1),
+            SVC(kernel='rbf', gamma=0.1),
+            SVC(kernel='rbf', gamma=0.1)
         ],
         'oversampling': True,
     },
     'fine': {
         'models': [
-            LogisticRegression(max_iter=10000),
-            LogisticRegression(max_iter=10000),
-            LogisticRegression(max_iter=10000)
+            KNeighborsClassifier(n_neighbors=4),
+            KNeighborsClassifier(n_neighbors=4),
+            KNeighborsClassifier(n_neighbors=3)
         ],
         'oversampling': True,
     },
     'no': {
         'models': [
-            LogisticRegression(max_iter=10000),
-            LogisticRegression(max_iter=10000),
-            LogisticRegression(max_iter=10000)
+            SVC(kernel='linear', gamma=0.1),
+            SVC(kernel='rbf', gamma=0.01),
+            SVC(kernel='rbf', gamma=0.01)
+        ],
+        'oversampling': True,
+    },
+}
+
+
+# TODO: fill real params
+BEST_PARAMS_WITH_METADATA = {
+    'coarse': {'model': KNeighborsClassifier(n_neighbors=4), 'oversampling': True},
+    'fine': {'model': KNeighborsClassifier(n_neighbors=4), 'oversampling': True},
+    'no': {'model': Lda(), 'oversampling': True}
+}
+
+# TODO: fill real params
+BEST_PARAMS_EXPERTS_WITH_METADATA = {
+    'coarse': {
+        'models': [
+            KNeighborsClassifier(n_neighbors=4),
+            KNeighborsClassifier(n_neighbors=6),
+            KNeighborsClassifier(n_neighbors=5)
+        ],
+        'oversampling': True,
+    },
+    'fine': {
+        'models': [
+            KNeighborsClassifier(n_neighbors=4),
+            KNeighborsClassifier(n_neighbors=4),
+            KNeighborsClassifier(n_neighbors=3)
+        ],
+        'oversampling': True,
+    },
+    'no': {
+        'models': [
+            GaussianNB(),
+            GaussianNB(),
+            GaussianNB()
         ],
         'oversampling': True,
     },
