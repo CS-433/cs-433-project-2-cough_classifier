@@ -5,7 +5,21 @@ from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.feature_selection import RFE
 from sklearn.pipeline import Pipeline
 from matplotlib import pyplot
+from src.utils.preprocessing import remove_correlated_features
+
 from src.utils.model_helpers import roc_w_cross_val
+
+
+def feature_engineering(samples, labels):
+    # remove unnecessary features
+    samples = remove_correlated_features(X_tr=samples, threshold=0.95)
+    # recursive feature elimination
+    # auc_mean, ranks = train_optimal_features_model(samples, labels.Label,
+    #    LogisticRegression(), start_idx = samples.shape[1] - 3)
+
+    # TODO: PolynomialFeatures
+
+    return samples, labels
 
 
 def get_models(model, X, start_idx=1):
