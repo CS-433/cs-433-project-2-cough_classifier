@@ -92,7 +92,7 @@ def split_experts(X, y):
     :type X: pd.Dataframe
     :param y: labels
     :type y: pd.Dataframe
-    :return: splited data and labels for each expert
+    :return: split data and labels for each expert
     """
     merged = X.merge(y, left_index=True, right_index=True)
 

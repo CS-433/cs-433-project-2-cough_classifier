@@ -6,7 +6,7 @@ import numpy as np
 
 from imblearn.over_sampling import SMOTE
 from sklearn.metrics import confusion_matrix, classification_report
-from sklearn.model_selection import train_test_split, GroupShuffleSplit
+from sklearn.model_selection import GroupShuffleSplit
 
 import torch
 import torch.nn as nn
@@ -20,6 +20,7 @@ from src.utils.config import SEED
 from src.utils.model_helpers import weight_reset
 from src.utils.preprocessing import standard_preprocessing
 from src.utils.feature_engineering import feature_engineering
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 torch.manual_seed(SEED)
@@ -29,23 +30,24 @@ DATA_PATH = './data'
 GS_DIR = "./models/grid_search_results"
 PARAM_DIR = "./models/weights"
 
+
 def train_model(X_train,
                 y_train,
                 subject_indices,
-                model = "binary",
-                criterion = "BCE",
-                optimizer = "SGD",
-                smote = False,
-                activation_function = "relu",
-                batch_size = 128,
-                hidden_layer_dims = [150],
-                epochs = 1000,
-                learning_rate = 0.0001,
-                dropout = 0.5,
-                weight_decay = 0.5,
-                split_val = 0.33,
-                verbose = True,
-                random_state = SEED):
+                model="binary",
+                criterion="BCE",
+                optimizer="SGD",
+                smote=False,
+                activation_function="relu",
+                batch_size=128,
+                hidden_layer_dims=[150],
+                epochs=1000,
+                learning_rate=0.0001,
+                dropout=0.5,
+                weight_decay=0.5,
+                split_val=0.33,
+                verbose=True,
+                random_state=SEED):
     """
     Modular Function for initializing and training a model.
 
@@ -75,7 +77,7 @@ def train_model(X_train,
     """
 
     # split them into train and test according to the groups
-    gss = GroupShuffleSplit(n_splits=1, train_size=1-split_val, random_state=SEED)
+    gss = GroupShuffleSplit(n_splits=1, train_size=1 - split_val, random_state=SEED)
     # since we only split once, use this command to get the
     # corresponding train and test indices
     for train_idx, val_idx in gss.split(X_train, y_train, subject_indices):
@@ -119,7 +121,6 @@ def train_model(X_train,
     elif optimizer == "SGD":
         optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate,
                                     weight_decay=weight_decay, momentum=0.5)
-
 
     # saves validation losses over all epochs
     val_losses_epochs = []
@@ -173,8 +174,8 @@ def train_model(X_train,
                 y_pred = y_pred[:, 0]
             if y_batch.ndim == 2:
                 y_batch = y_batch[:, 0]
-            #print(y_pred)
-            #print(y_batch)
+            # print(y_pred)
+            # print(y_batch)
             loss = criterion(y_pred, y_batch)
 
             # calculate acc and auc of the predication
@@ -212,10 +213,13 @@ def train_model(X_train,
 
         if verbose:
             if isinstance(auc, str):
-                print(f'Epoch {epoch + 0:03}: | Validation Loss: {val_losses_epochs[-1]:.3f}  | ACC: {val_acc_epochs[-1]:.3f} | AUC: {val_auc_epochs[-1]} {indicator_string}')
+                print(
+                    f'Epoch {epoch + 0:03}: | Validation Loss: {val_losses_epochs[-1]:.3f}  | '
+                    f'ACC: {val_acc_epochs[-1]:.3f} | AUC: {val_auc_epochs[-1]} {indicator_string}')
             else:
-                print(f'Epoch {epoch + 0:03}: | Validation Loss: {val_losses_epochs[-1]:.3f}  | ACC: {val_acc_epochs[-1]:.3f} | AUC: {val_auc_epochs[-1]:.3f} {indicator_string}')
-
+                print(
+                    f'Epoch {epoch + 0:03}: | Validation Loss: {val_losses_epochs[-1]:.3f}  | '
+                    f'ACC: {val_acc_epochs[-1]:.3f} | AUC: {val_auc_epochs[-1]:.3f} {indicator_string}')
 
         # convergence criterion: at least found a new best model in the last
         # 100 epochs
@@ -297,24 +301,24 @@ def cross_validation_nn(X,
                         subjects,
                         K,
                         segmentation_type,
-                        file_name = None,
-                        train_size = 0.7,
-                        models = ["binary"],
-                        hidden_layer_dims = [[50], [100], [200], [400], [800],
-                                                [50]*2, [100]*2, [200]*2],
-                        batch_sizes = [128],
-                        learning_rates = [0.005, 0.001, 0.0005, 0.0001],
-                        criteria = ["BCE"],
-                        optimizers = ["SGD", "Adam"],
-                        activation_functions = ["relu"],
-                        weight_decays = [0.0, 1.0, 2.0],
-                        dropouts = [.2, .5],
-                        smote_setups = [True, False],
-                        max_epochs = 1000,
-                        type_of_data = "whole_data",
-                        using_user_features = True,
-                        random_state = 42,
-                        verbose = False):
+                        file_name=None,
+                        train_size=0.7,
+                        models=("binary"),
+                        hidden_layer_dims=([50], [100], [200], [400], [800],
+                                           [50] * 2, [100] * 2, [200] * 2),
+                        batch_sizes=(128),
+                        learning_rates=(0.005, 0.001, 0.0005, 0.0001),
+                        criteria=("BCE"),
+                        optimizers=("SGD", "Adam"),
+                        activation_functions=("relu"),
+                        weight_decays=(0.0, 1.0, 2.0),
+                        dropouts=(.2, .5),
+                        smote_setups=(True, False),
+                        max_epochs=1000,
+                        type_of_data="whole_data",
+                        using_user_features=True,
+                        random_state=42,
+                        verbose=False):
     """
     Function to perform cross validation and find the best hyperparameters.
 
@@ -362,15 +366,15 @@ def cross_validation_nn(X,
               "smote": [],
               "avg_acc": [],
               "avg_auc": [],
-              "use_user_data":[],
-              "split_by_expert":[],
-              "segmentation_type":[]}
+              "use_user_data": [],
+              "split_by_expert": [],
+              "segmentation_type": []}
 
     # this functions enables us to split into multiple training/test dataset,
     # i.e. cross validation set, while also upholding the condition to not mix
     # samples from the same individual/group into both training and testing at
     # the same time
-    gss = GroupShuffleSplit(n_splits=K, train_size=1 - 1/K, random_state=random_state)
+    gss = GroupShuffleSplit(n_splits=K, train_size=1 - 1 / K, random_state=random_state)
 
     # bring smote in
     for model in models:
@@ -386,26 +390,29 @@ def cross_validation_nn(X,
                                             # measure for evaluating each setup
                                             sum_acc = 0
                                             sum_auc = 0
-                                            print(f"[!] SETUP: {model} | {criterion} | {optimizer} | {activation_function} | {dims} | {learning_rate} | {weight_decay} | {dropout} | {smote}")
+                                            print(
+                                                f"[!] SETUP: {model} | {criterion} | {optimizer} | "
+                                                f"{activation_function} | {dims} | {learning_rate} | "
+                                                f"{weight_decay} | {dropout} | {smote}")
                                             # perform cross validation
                                             for train_idx, test_idx in gss.split(X, y, subjects):
                                                 # train a model with the given hyperparameters,
                                                 # and the given cv split dataset
                                                 cv_model = train_model(X[train_idx],
-                                                        y[train_idx],
-                                                        [subject_indices[x] for x in train_idx],
-                                                        model=model,
-                                                        criterion=criterion,
-                                                        optimizer=optimizer,
-                                                        activation_function=activation_function,
-                                                        hidden_layer_dims=dims,
-                                                        batch_size=batch_size,
-                                                        learning_rate=learning_rate,
-                                                        weight_decay=weight_decay,
-                                                        dropout=dropout,
-                                                        epochs=max_epochs,
-                                                        smote=smote,
-                                                        verbose=verbose)
+                                                                       y[train_idx],
+                                                                       [subject_indices[x] for x in train_idx],
+                                                                       model=model,
+                                                                       criterion=criterion,
+                                                                       optimizer=optimizer,
+                                                                       activation_function=activation_function,
+                                                                       hidden_layer_dims=dims,
+                                                                       batch_size=batch_size,
+                                                                       learning_rate=learning_rate,
+                                                                       weight_decay=weight_decay,
+                                                                       dropout=dropout,
+                                                                       epochs=max_epochs,
+                                                                       smote=smote,
+                                                                       verbose=verbose)
                                                 # test the cv model, and add the
                                                 # performance of this cv split
                                                 # to the measures
@@ -438,7 +445,11 @@ def cross_validation_nn(X,
                                             # transform to dictionary
                                             gs_df = pd.DataFrame.from_dict(gs_dic)
                                             # save dictionary
-                                            gs_df.to_csv(GS_DIR + "/" + "grid_search_df_" + segmentation_type + "_uses_user_features_" + str(using_user_features) + "_" + type_of_data + "_" + start_time + ".csv")
+                                            gs_df.to_csv(
+                                                GS_DIR + "/" + "grid_search_df_" + segmentation_type +
+                                                "_uses_user_features_" + str(using_user_features) + "_" +
+                                                type_of_data + "_" + start_time + ".csv")
+
 
 ################################################################################
 ################################################################################
@@ -466,17 +477,17 @@ if __name__ == "__main__":
 
     # get feature and label dataframes
     features_whole, labels_whole = import_data(path=DATA_PATH,
-                                    segmentation_type=segmentation_type,
-                                    drop_user_features=drop_user_features,
-                                    return_type='pd',
-                                    drop_expert= not split_by_expert)
+                                               segmentation_type=segmentation_type,
+                                               drop_user_features=drop_user_features,
+                                               return_type='pd',
+                                               drop_expert=not split_by_expert)
     # if we dont split by expert, we only have one pair or features/labels
     if not split_by_expert:
-        data = {"whole_data":(features_whole, labels_whole)}
+        data = {"whole_data": (features_whole, labels_whole)}
     # otherwise we split them into the three experts
     else:
         temp_data = split_experts(features_whole, labels_whole)
-        data = {f"expert_{int((i/2)+1)}":(temp_data[i], temp_data[i+1]) for i in range(0, len(temp_data), 2)}
+        data = {f"expert_{int((i / 2) + 1)}": (temp_data[i], temp_data[i + 1]) for i in range(0, len(temp_data), 2)}
 
     # go through the dataframes (only one if we dont split)
     for name, (features, labels) in data.items():
@@ -494,11 +505,10 @@ if __name__ == "__main__":
         if grid_search:
             # cross validation
             cross_validation_nn(features.values, labels.values, subject_indices,
-                K  = 10, verbose = False,
-                segmentation_type = segmentation_type,
-                using_user_features = not drop_user_features,
-                type_of_data=name)
-
+                                K=10, verbose=False,
+                                segmentation_type=segmentation_type,
+                                using_user_features=not drop_user_features,
+                                type_of_data=name)
 
         else:
             # split them into train and test according to the groups
@@ -514,14 +524,14 @@ if __name__ == "__main__":
                                 labels.values[train_idx],
 
                                 [subject_indices[x] for x in train_idx],
-                                verbose = True,
-                                epochs = 750)
+                                verbose=True,
+                                epochs=750)
             # calculate the shap values
             shap_df = get_shap_values(model,
-                                    features.values[train_idx],
-                                    features.values[test_idx],
-                                    features.columns,
-                                    device=device)
+                                      features.values[train_idx],
+                                      features.values[test_idx],
+                                      features.columns,
+                                      device=device)
             print("\n\n\n SHAP Values")
             print(shap_df)
 

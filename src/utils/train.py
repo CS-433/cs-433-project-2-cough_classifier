@@ -14,10 +14,13 @@ from src.utils.preprocessing import oversample
 from src.utils.model_helpers import cross_val_w_oversampling, ensemble_predictions
 from collections import defaultdict
 
+IMPLEMENTED_MODELS = (
+    'knn', 'logistic', 'lda', 'svc', 'naive_bayes', 'decision_tree', 'random_forest', 'gradient_boosting')
+
+
 def hyperparameter_tuning_cv(model, data, labels, cv_k, params,
-                             metrics=[f1_score, roc_auc_score, accuracy_score, explained_variance_score]) -> pd.DataFrame:
-    implemented_models = (
-        'knn', 'logistic', 'lda', 'svc', 'naive_bayes', 'decision_tree', 'random_forest', 'gradient_boosting')
+                             metrics=(f1_score, roc_auc_score, accuracy_score,
+                                      explained_variance_score)) -> pd.DataFrame:
     """
     Train the classical models hyperparameters with cross validation
     :param model: model to tune
@@ -35,7 +38,7 @@ def hyperparameter_tuning_cv(model, data, labels, cv_k, params,
     :return: dataframe with evaluated parameters and metrics
     """
 
-    assert model in implemented_models, "model does not exist"
+    assert model in IMPLEMENTED_MODELS, "Model does not exist"
 
     d = defaultdict(list)
     indexes_list = []

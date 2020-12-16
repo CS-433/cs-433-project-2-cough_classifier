@@ -15,14 +15,14 @@ def classic_preprocessing(X_tr, X_te=None, start=0, stop=-3, thresh=0.95, norm=T
     :type start: int
     :param stop: end index
     :type stop: int
-    :param threshold: threshold for correlation
+    :param thresh: threshold for correlation
     :type X_te: float
     :param norm: do normalisation
     :type norm: boolean
     :param dummy: do dummy coding
     :type dummy: boolean
-    :param drop_cor: drop correlated features
-    :type drop_cor: boolean
+    :param drop_corr: drop correlated features
+    :type drop_corr: boolean
     :return: preprocessed dataframe
     """
     if norm:
@@ -48,7 +48,7 @@ def classic_preprocessing(X_tr, X_te=None, start=0, stop=-3, thresh=0.95, norm=T
 
 def standard_preprocessing(samples, labels, do_standardize=True,
                            do_smote=True, do_dummy_coding=True,
-                           categorical_features=['Gender', 'Resp_Condition', 'Symptoms']):
+                           categorical_features=('Gender', 'Resp_Condition', 'Symptoms')):
     """
     Do all the standard preprocessing at once
     :param samples: dataframe
@@ -143,7 +143,6 @@ def dummy_code(df, columns):
     return df
 
 
-# TODO remove from here, already in feature engineering
 def remove_correlated_features(X_tr, X_te=None, threshold=0.95, verbose=False):
     """
     Remove features with correlation > threshold
