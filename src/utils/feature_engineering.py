@@ -12,7 +12,7 @@ from src.utils.model_helpers import roc_w_cross_val
 
 def feature_engineering(samples, labels):
     # remove unnecessary features
-    samples = remove_correlated_features(samples, 0.95)
+    samples = remove_correlated_features(X_tr=samples, threshold=0.95)
     # recursive feature elimination
     # auc_mean, ranks = train_optimal_features_model(samples, labels.Label,
     #    LogisticRegression(), start_idx = samples.shape[1] - 3)
