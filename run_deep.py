@@ -524,6 +524,7 @@ def predict_test_results():
 
         # make predictions
         predictions = predict(X.values, model)
+        predictions = [x[0] for x in predictions]
 
         # save predictions
         create_csv_submission(predictions, segm_type=segmentation, submission_path=PREDICTION_DATA + "/predictions_deep",
