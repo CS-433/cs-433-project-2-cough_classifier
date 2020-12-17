@@ -1,26 +1,26 @@
 import datetime
 import sys
+from pathlib import Path
 
 import pandas as pd
 import numpy as np
 
 from imblearn.over_sampling import SMOTE
 from sklearn.metrics import confusion_matrix, classification_report
-from sklearn.model_selection import GroupShuffleSplit
+from sklearn.model_selection import train_test_split, GroupShuffleSplit
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
 
 from src.models.model import BinaryClassification
-from src.utils.utils import binary_acc, area_under_the_curve, get_shap_values
+from src.utils.utils import binary_acc, area_under_the_curve, get_shap_values, create_csv_submission
 from src.utils.get_data import import_data, get_data_loader, split_experts
 from src.utils.preprocessing import standardize
 from src.utils.config import SEED
 from src.utils.model_helpers import weight_reset
 from src.utils.preprocessing import standard_preprocessing
 from src.utils.feature_engineering import feature_engineering
-
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 torch.manual_seed(SEED)
@@ -29,25 +29,25 @@ np.random.seed(SEED)
 DATA_PATH = './data'
 GS_DIR = "./models/grid_search_results"
 PARAM_DIR = "./models/weights"
-
+PREDICTION_DATA = "./data/test"
 
 def train_model(X_train,
                 y_train,
                 subject_indices,
-                model="binary",
-                criterion="BCE",
-                optimizer="SGD",
-                smote=False,
-                activation_function="relu",
-                batch_size=128,
-                hidden_layer_dims=[150],
-                epochs=1000,
-                learning_rate=0.0001,
-                dropout=0.5,
-                weight_decay=0.5,
-                split_val=0.33,
-                verbose=True,
-                random_state=SEED):
+                model = "binary",
+                criterion = "BCE",
+                optimizer = "SGD",
+                smote = False,
+                activation_function = "relu",
+                batch_size = 128,
+                hidden_layer_dims = [150],
+                epochs = 1000,
+                learning_rate = 0.0001,
+                dropout = 0.5,
+                weight_decay = 0.5,
+                split_val = 0.33,
+                verbose = True,
+                random_state = SEED):
     """
     Modular Function for initializing and training a model.
 
@@ -77,7 +77,7 @@ def train_model(X_train,
     """
 
     # split them into train and test according to the groups
-    gss = GroupShuffleSplit(n_splits=1, train_size=1 - split_val, random_state=SEED)
+    gss = GroupShuffleSplit(n_splits=1, train_size=1-split_val, random_state=SEED)
     # since we only split once, use this command to get the
     # corresponding train and test indices
     for train_idx, val_idx in gss.split(X_train, y_train, subject_indices):
@@ -121,6 +121,7 @@ def train_model(X_train,
     elif optimizer == "SGD":
         optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate,
                                     weight_decay=weight_decay, momentum=0.5)
+
 
     # saves validation losses over all epochs
     val_losses_epochs = []
@@ -174,8 +175,8 @@ def train_model(X_train,
                 y_pred = y_pred[:, 0]
             if y_batch.ndim == 2:
                 y_batch = y_batch[:, 0]
-            # print(y_pred)
-            # print(y_batch)
+            #print(y_pred)
+            #print(y_batch)
             loss = criterion(y_pred, y_batch)
 
             # calculate acc and auc of the predication
@@ -213,23 +214,62 @@ def train_model(X_train,
 
         if verbose:
             if isinstance(auc, str):
-                print(
-                    f'Epoch {epoch + 0:03}: | Validation Loss: {val_losses_epochs[-1]:.3f}  | '
-                    f'ACC: {val_acc_epochs[-1]:.3f} | AUC: {val_auc_epochs[-1]} {indicator_string}')
+                print(f'Epoch {epoch + 0:03}: | Validation Loss: {val_losses_epochs[-1]:.3f}  | ACC: {val_acc_epochs[-1]:.3f} | AUC: {val_auc_epochs[-1]} {indicator_string}')
             else:
-                print(
-                    f'Epoch {epoch + 0:03}: | Validation Loss: {val_losses_epochs[-1]:.3f}  | '
-                    f'ACC: {val_acc_epochs[-1]:.3f} | AUC: {val_auc_epochs[-1]:.3f} {indicator_string}')
+                print(f'Epoch {epoch + 0:03}: | Validation Loss: {val_losses_epochs[-1]:.3f}  | ACC: {val_acc_epochs[-1]:.3f} | AUC: {val_auc_epochs[-1]:.3f} {indicator_string}')
+
 
         # convergence criterion: at least found a new best model in the last
         # 100 epochs
-        if (epoch - best_epoch) >= 50:
+        if (epoch - best_epoch) >= 5:
             break
 
     # load the best model from memory
     model.load_state_dict(best_model)
 
     return model
+
+
+################################################################################
+################################################################################
+################################################################################
+
+def predict(X, model, batch_size=1, verbose=True):
+    """
+    Given a trained model and a prediction dataset, this function will produce
+    predictions.
+
+    Args:
+        X (np.array): prediction samples
+        model (nn.Module): a trained model
+        batch_size (int): batch size for testing (usually 1)
+        verbose (bool): printing extra information
+
+    Returns:
+        (list): predictions
+    """
+
+    # create a torch data loader for training
+    test_loader = get_data_loader(X, [0.]*X.shape[0], batch_size)
+
+    # set model into testing mode
+    model.eval()
+
+    # for saving predictions and the real labels
+    y_pred_list = []
+
+    with torch.no_grad():
+        # go through all data points
+        for X_batch, y_batch in test_loader:
+            # map to cpu/gpu tensors
+            X_batch = X_batch.to(device)
+            # get predictions
+            y_test_pred = model(X_batch)
+            y_test_pred = torch.sigmoid(y_test_pred)
+
+            y_pred_list.extend(y_test_pred.cpu().numpy())
+
+    return y_pred_list
 
 
 ################################################################################
@@ -260,6 +300,7 @@ def test_model(X_test, y_test, model, batch_size=1, verbose=True):
 
     # for saving predictions and the real labels
     y_pred_list = []
+    y_pred_tag_list = []
     y_test_list = []
 
     with torch.no_grad():
@@ -270,22 +311,26 @@ def test_model(X_test, y_test, model, batch_size=1, verbose=True):
             # get predictions
             y_test_pred = model(X_batch)
             # since this is training, use sigmoid to map it between 0 and 1
+            #print("\n"*10)
+            #print(y_test_pred)
             y_test_pred = torch.sigmoid(y_test_pred)
+            #print(y_test_pred)
             # ... and round it to 0 or 1
             y_pred_tag = torch.round(y_test_pred)
             # add to list
-            y_pred_list.extend(y_pred_tag.cpu().numpy())
+            y_pred_list.extend(y_test_pred.cpu().numpy())
+            y_pred_tag_list.extend(y_pred_tag.cpu().numpy())
             y_test_list.extend(y_batch.cpu().numpy())
-
+            #print(y_pred_tag)
     if verbose:
         print("[!] Confusion Matrix")
-        print(confusion_matrix(y_test_list, y_pred_list))
+        print(confusion_matrix(y_test_list, y_pred_tag_list))
         print("[!] Classification Report")
-        print(classification_report(y_test_list, y_pred_list))
+        print(classification_report(y_test_list, y_pred_tag_list))
 
     # calculate testing accuracy and area under the curve
     auc = area_under_the_curve(y_pred_list, y_test_list)
-    acc = binary_acc(y_pred_list, y_test_list)
+    acc = binary_acc(y_pred_tag_list, y_test_list)
 
     if verbose:
         print(f"Test finished with ACC: {acc} | AUC: {auc}")
@@ -301,24 +346,23 @@ def cross_validation_nn(X,
                         subjects,
                         K,
                         segmentation_type,
-                        file_name=None,
-                        train_size=0.7,
-                        models=("binary"),
-                        hidden_layer_dims=([50], [100], [200], [400], [800],
-                                           [50] * 2, [100] * 2, [200] * 2),
-                        batch_sizes=(128),
-                        learning_rates=(0.005, 0.001, 0.0005, 0.0001),
-                        criteria=("BCE"),
-                        optimizers=("SGD", "Adam"),
-                        activation_functions=("relu"),
-                        weight_decays=(0.0, 1.0, 2.0),
-                        dropouts=(.2, .5),
-                        smote_setups=(True, False),
-                        max_epochs=1000,
-                        type_of_data="whole_data",
-                        using_user_features=True,
-                        random_state=42,
-                        verbose=False):
+                        file_name = None,
+                        train_size = 0.7,
+                        models = ["binary"],
+                        hidden_layer_dims = [[50], [100], [200], [400]],
+                        batch_sizes = [128],
+                        learning_rates = [0.0005, 0.0001],
+                        criteria = ["BCE"],
+                        optimizers = ["Adam"],
+                        activation_functions = ["relu"],
+                        weight_decays = [0.2, 0.5],
+                        dropouts = [.5],
+                        smote_setups = [True, False],
+                        max_epochs = 1000,
+                        type_of_data = "whole_data",
+                        using_user_features = True,
+                        random_state = 42,
+                        verbose = False):
     """
     Function to perform cross validation and find the best hyperparameters.
 
@@ -366,15 +410,15 @@ def cross_validation_nn(X,
               "smote": [],
               "avg_acc": [],
               "avg_auc": [],
-              "use_user_data": [],
-              "split_by_expert": [],
-              "segmentation_type": []}
+              "use_user_data":[],
+              "split_by_expert":[],
+              "segmentation_type":[]}
 
     # this functions enables us to split into multiple training/test dataset,
     # i.e. cross validation set, while also upholding the condition to not mix
     # samples from the same individual/group into both training and testing at
     # the same time
-    gss = GroupShuffleSplit(n_splits=K, train_size=1 - 1 / K, random_state=random_state)
+    gss = GroupShuffleSplit(n_splits=K, train_size=1 - 1/K, random_state=random_state)
 
     # bring smote in
     for model in models:
@@ -390,29 +434,26 @@ def cross_validation_nn(X,
                                             # measure for evaluating each setup
                                             sum_acc = 0
                                             sum_auc = 0
-                                            print(
-                                                f"[!] SETUP: {model} | {criterion} | {optimizer} | "
-                                                f"{activation_function} | {dims} | {learning_rate} | "
-                                                f"{weight_decay} | {dropout} | {smote}")
+                                            print(f"[!] SETUP: {model} | {criterion} | {optimizer} | {activation_function} | {dims} | {learning_rate} | {weight_decay} | {dropout} | {smote}")
                                             # perform cross validation
                                             for train_idx, test_idx in gss.split(X, y, subjects):
                                                 # train a model with the given hyperparameters,
                                                 # and the given cv split dataset
                                                 cv_model = train_model(X[train_idx],
-                                                                       y[train_idx],
-                                                                       [subject_indices[x] for x in train_idx],
-                                                                       model=model,
-                                                                       criterion=criterion,
-                                                                       optimizer=optimizer,
-                                                                       activation_function=activation_function,
-                                                                       hidden_layer_dims=dims,
-                                                                       batch_size=batch_size,
-                                                                       learning_rate=learning_rate,
-                                                                       weight_decay=weight_decay,
-                                                                       dropout=dropout,
-                                                                       epochs=max_epochs,
-                                                                       smote=smote,
-                                                                       verbose=verbose)
+                                                        y[train_idx],
+                                                        [subjects[x] for x in train_idx],
+                                                        model=model,
+                                                        criterion=criterion,
+                                                        optimizer=optimizer,
+                                                        activation_function=activation_function,
+                                                        hidden_layer_dims=dims,
+                                                        batch_size=batch_size,
+                                                        learning_rate=learning_rate,
+                                                        weight_decay=weight_decay,
+                                                        dropout=dropout,
+                                                        epochs=max_epochs,
+                                                        smote=smote,
+                                                        verbose=verbose)
                                                 # test the cv model, and add the
                                                 # performance of this cv split
                                                 # to the measures
@@ -422,6 +463,7 @@ def cross_validation_nn(X,
                                                                       verbose=False)
                                                 sum_acc += acc
                                                 sum_auc += auc
+
                                                 # each time, reset the model weights
                                                 cv_model.apply(weight_reset)
                                             # print the average performance
@@ -445,49 +487,112 @@ def cross_validation_nn(X,
                                             # transform to dictionary
                                             gs_df = pd.DataFrame.from_dict(gs_dic)
                                             # save dictionary
-                                            gs_df.to_csv(
-                                                GS_DIR + "/" + "grid_search_df_" + segmentation_type +
-                                                "_uses_user_features_" + str(using_user_features) + "_" +
-                                                type_of_data + "_" + start_time + ".csv")
-
+                                            gs_df.to_pickle(GS_DIR + "/" + "grid_search_df_" + segmentation_type + "_uses_user_features_" + str(using_user_features) + "_" + type_of_data + "_" + start_time + ".pkl")
 
 ################################################################################
 ################################################################################
 ################################################################################
 
-if __name__ == "__main__":
-    # if no command line arguments are given, use predefined ones
-    if len(sys.argv) == 1:
-        # boolean variable deciding wether to train and test a model
-        # in the conventional sense, or perform gridsearch using cross
-        # cross-validation
-        grid_search = False
-        # to split the coughs by expert or not
-        split_by_expert = True
-        # to use the user supplied data
-        drop_user_features = False
-        # no, coarse or fine segmentation data
-        segmentation_type = "fine"
-    # else, take the command line arguments
-    else:
-        segmentation_type = sys.argv[1]
-        split_by_expert = sys.argv[2] == "True"
-        drop_user_features = sys.argv[3] == "True"
-        grid_search = sys.argv[4] == "True"
+def predict_test_results():
+    """
+    Function that created predictions, given that models are in
+    models/weights. Saves them into data/test/predictions_deep.
+    """
+
+    segmentation_types = ["no", "coarse", "fine"]
+    model_paths = ["no_model.pth", "coarse_model.pth", "fine_model.pth"]
+
+    # create folder if not already there
+    Path(PREDICTION_DATA + "/predictions_deep").mkdir(exist_ok=True)
+
+    for segmentation, model_path in zip(segmentation_types, model_paths):
+        # load the best model
+        model = torch.load(PARAM_DIR + "/" + model_path)
+        model.eval()
+
+        # get the corresponding data
+        X = import_data(DATA_PATH, segmentation_type=segmentation,
+                           drop_user_features=False,
+                           drop_expert=True,
+                           is_test=True)
+
+
+        # preprocess it
+        X, _ = standard_preprocessing(X, None, do_smote=False)
+
+        # make predictions
+        predictions = predict(X.values, model)
+
+        # save predictions
+        create_csv_submission(predictions, segm_type=segmentation, submission_path=PREDICTION_DATA + "/predictions_deep",
+                              expert=False, user_features=True)
+
+
+
+
+def train_best_models():
+    segmentation_types = ["no", "coarse", "fine"]
+    gs_paths = ["no_gs.pkl", "coarse_gs.pkl", "fine_gs.pkl"]
+    for segmentation, path in zip(segmentation_types, gs_paths):
+        # get feature and label dataframes
+        features, labels = import_data(path=DATA_PATH,
+                                        segmentation_type=segmentation,
+                                        drop_user_features=False,
+                                        return_type='pd',
+                                        drop_expert= True)
+        # get the best parameters
+        df = pd.read_pickle(GS_DIR + "/" + path)
+        best_params = df.iloc[df['avg_auc'].argmax()]
+
+        print(f"Generating best models for -->{segmentation}<-- data!")
+
+        # get the the subject indices, in order to avoid putting samples from
+        # the same individuals into test and training
+        subject_indices = [l[0] for l in list(features.index)]
+
+        # preprocess our features
+        features, labels = standard_preprocessing(features, labels, do_smote=False)
+        # apply feature engineering TODO
+        #features, labels = feature_engineering(features, labels)
+
+        # train a model
+        model = train_model(features.values,
+                            labels.values,
+                            subject_indices,
+                            optimizer = best_params["optimizer"],
+                            smote = best_params["smote"],
+                            hidden_layer_dims = best_params["hidden_layer_dims"],
+                            learning_rate = best_params["learning_rate"],
+                            dropout = best_params["dropout"],
+                            weight_decay = best_params["weight_decay"],
+                            split_val = 0.2,
+                            verbose = True,
+                            epochs = 1000)
+
+
+        # save this beest model
+        torch.save(model, PARAM_DIR + "/" + segmentation + "_model.pth")
+
+
+
+def grid_search():
+    segmentation_type = sys.argv[2]
+    split_by_expert = sys.argv[3] == "True"
+    drop_user_features = sys.argv[4] == "True"
 
     # get feature and label dataframes
     features_whole, labels_whole = import_data(path=DATA_PATH,
-                                               segmentation_type=segmentation_type,
-                                               drop_user_features=drop_user_features,
-                                               return_type='pd',
-                                               drop_expert=not split_by_expert)
+                                    segmentation_type=segmentation_type,
+                                    drop_user_features=drop_user_features,
+                                    return_type='pd',
+                                    drop_expert= not split_by_expert)
     # if we dont split by expert, we only have one pair or features/labels
     if not split_by_expert:
-        data = {"whole_data": (features_whole, labels_whole)}
+        data = {"whole_data":(features_whole, labels_whole)}
     # otherwise we split them into the three experts
     else:
         temp_data = split_experts(features_whole, labels_whole)
-        data = {f"expert_{int((i / 2) + 1)}": (temp_data[i], temp_data[i + 1]) for i in range(0, len(temp_data), 2)}
+        data = {f"expert_{int((i/2)+1)}":(temp_data[i], temp_data[i+1]) for i in range(0, len(temp_data), 2)}
 
     # go through the dataframes (only one if we dont split)
     for name, (features, labels) in data.items():
@@ -500,40 +605,94 @@ if __name__ == "__main__":
         # preprocess our features
         features, labels = standard_preprocessing(features, labels, do_smote=False)
         # apply feature engineering
-        features, labels = feature_engineering(features, labels)
+        #features, labels = feature_engineering(features, labels)
 
-        if grid_search:
-            # cross validation
-            cross_validation_nn(features.values, labels.values, subject_indices,
-                                K=10, verbose=False,
-                                segmentation_type=segmentation_type,
-                                using_user_features=not drop_user_features,
-                                type_of_data=name)
+        # cross validation
+        cross_validation_nn(features.values, labels.values, subject_indices,
+            K  = 3, verbose = False,
+            segmentation_type = segmentation_type,
+            using_user_features = not drop_user_features,
+            type_of_data=name)
 
-        else:
-            # split them into train and test according to the groups
-            gss = GroupShuffleSplit(n_splits=1, train_size=0.7, random_state=SEED)
-            # since we only split once, use this command to get the
-            # corresponding train and test indices
-            for train_idx, test_idx in gss.split(features.values, labels.values, subject_indices):
-                continue
 
-            # train a model
-            # TODO uses smote always
-            model = train_model(features.values[train_idx],
-                                labels.values[train_idx],
 
-                                [subject_indices[x] for x in train_idx],
-                                verbose=True,
-                                epochs=750)
-            # calculate the shap values
-            shap_df = get_shap_values(model,
-                                      features.values[train_idx],
-                                      features.values[test_idx],
-                                      features.columns,
-                                      device=device)
-            print("\n\n\n SHAP Values")
-            print(shap_df)
+def train_test():
+    # if no command line arguments are given, use predefined ones
+    if len(sys.argv) == 1:
+        # to split the coughs by expert or not
+        split_by_expert = False
+        # to use the user supplied data
+        drop_user_features = False
+        # no, coarse or fine segmentation data
+        segmentation_type = "coarse"
+    # else, take the command line arguments
+    else:
+        segmentation_type = sys.argv[2]
+        split_by_expert = sys.argv[3] == "True"
+        drop_user_features = sys.argv[4] == "True"
 
-            # test the model
-            test_model(features.values[test_idx], labels.values[test_idx], model, verbose=True)
+    # get feature and label dataframes
+    features_whole, labels_whole = import_data(path=DATA_PATH,
+                                    segmentation_type=segmentation_type,
+                                    drop_user_features=drop_user_features,
+                                    return_type='pd',
+                                    drop_expert= not split_by_expert)
+    # if we dont split by expert, we only have one pair or features/labels
+    if not split_by_expert:
+        data = {"whole_data":(features_whole, labels_whole)}
+    # otherwise we split them into the three experts
+    else:
+        temp_data = split_experts(features_whole, labels_whole)
+        data = {f"expert_{int((i/2)+1)}":(temp_data[i], temp_data[i+1]) for i in range(0, len(temp_data), 2)}
+
+    # go through the dataframes (only one if we dont split)
+    for name, (features, labels) in data.items():
+        print(f"Looking at -->{name}<-- data!")
+
+        # get the the subject indices, in order to avoid putting samples from
+        # the same individuals into test and training
+        subject_indices = [l[0] for l in list(features.index)]
+
+        # preprocess our features
+        features, labels = standard_preprocessing(features, labels, do_smote=False)
+        # apply feature engineering
+        #features, labels = feature_engineering(features, labels)
+
+        # split them into train and test according to the groups
+        gss = GroupShuffleSplit(n_splits=1, train_size=0.7, random_state=SEED)
+        # since we only split once, use this command to get the
+        # corresponding train and test indices
+        for train_idx, test_idx in gss.split(features.values, labels.values, subject_indices):
+            continue
+
+        # train a model
+        model = train_model(features.values[train_idx],
+                            labels.values[train_idx],
+                            [subject_indices[x] for x in train_idx],
+                            verbose = True,
+                            epochs = 300)
+        # calculate the shap values
+        shap_df = get_shap_values(model,
+                                features.values[train_idx],
+                                features.values[test_idx],
+                                features.columns,
+                                device=device)
+        print("\n\n\n SHAP Values")
+        print(shap_df)
+
+        # test the model
+        test_model(features.values[test_idx], labels.values[test_idx], model, verbose=True)
+
+if __name__=="__main__":
+    if len(sys.argv) == 1:
+        train_test()
+    elif len(sys.argv) == 2 and sys.argv[1] == "make_predictions":
+        predict_test_results()
+    elif len(sys.argv) == 2 and sys.argv[1] == "train_best_models":
+        train_best_models()
+    elif len(sys.argv) == 5 and sys.argv[1] == "train_test":
+        train_test()
+    elif len(sys.argv) == 5 and sys.argv[1] == "grid_search":
+        grid_search()
+    else:
+        print("not possible")

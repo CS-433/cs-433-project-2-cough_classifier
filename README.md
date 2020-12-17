@@ -57,7 +57,7 @@ pip3 install -r requirements.txt
 
 this is how the three approaches can be executed.
 
-###### Classical Approach
+##### Classical Approach
 For executing a complete grid-search, the user has to run the notebooks found in `src/notebooks/grid_search_classical`.
 There are 6 files in total, with the different cases:
 
@@ -74,8 +74,26 @@ $ python3 run_classical.py
 
 The test results are automatically saved in the folder `data/test/predictions_classical/`
 
-###### ANN Approach
+##### ANN Approach
 
+###### Default Train-Test Run
+```bash
+$ python3 run_deep.py
+```
+
+###### Specified Train-Test Run
+```bash
+$ python3 run_deep.py train_test arg1 arg2
+```
+
+where
+
+* `arg1` (boolean): if `True` one model is trained for each expert. Otherwise, if `False`, one model is trained for the
+  whole dataset.
+* `arg2` (boolean): if `True` the user metadata is dropped and not used. Otherwise, if `False`, the model makes use of
+  them.
+
+###### Complete Grid Search
 For executing a complete grid-search, in the sense that one might also want to iterate over...
 
 * whether to train one model for each expert or not
@@ -93,10 +111,9 @@ at which point it can be executed via
 $ ./run_deep_all.sh
 ```
 
-Otherwise, one can directly execute the corresponding script using
-
+###### Specified Grid Search
 ```bash
-$ python3 run_deep.py arg1 arg2 arg3
+$ python3 run_deep.py grid_search arg1 arg2
 ```
 
 where
@@ -105,10 +122,25 @@ where
   whole dataset.
 * `arg2` (boolean): if `True` the user metadata is dropped and not used. Otherwise, if `False`, the model makes use of
   them.
-* `arg3` (boolean): if `True` grid search is performed. Otherwise, if `False`, a typical *training/testing* setup is
-  executed.
-  
-###### CRNN Approach
+
+This script will generate pickle files in `models/grid_search_results` that are needed for training the best models.
+
+###### Training the best Models after a Grid Search has been run
+```bash
+$ python3 run_deep.py train_best_models
+```
+
+This script will generate PyTorch models and save them in `models/weights`.
+
+###### Generating Test Predictions
+```bash
+$ python3 run_deep.py make_predictions
+```
+
+This script will generate predictions and save them in `/data/test/predictions_deep`.
+
+
+##### CRNN Approach
 
 First, one has to prepare the raw audio sounds. To do that, the user can download the files on the [`COUGHVID crowdsourcing dataset`](https://zenodo.org/record/4048312#.X4laBNAzY2w) to the `crnn_audio/data/` folder.
 
@@ -117,7 +149,7 @@ As the CRNN network only accepts certain audio file formats, the user has to run
 ```bash
 $ python3 crnn_audio/data/convert_to_wav.py
 ```
-  
+
 to convert the raw audio sounds to the accepted `.wav` format. Only the files available in the annotated dataset will be converted and saved to `crnn_audio/data/wav_data/`.
 (`ffmpeg` has to be installed to successfully run this file)
 
