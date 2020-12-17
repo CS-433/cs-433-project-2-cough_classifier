@@ -18,7 +18,6 @@ def binary_acc(y_pred, y_test):
     Returns:
         acc (float): Accuracy
     """
-    # TODO might be wrong
     if torch.is_tensor(y_pred):
         y_pred = y_pred.detach().numpy()
     else:
@@ -54,11 +53,21 @@ def area_under_the_curve(y_pred, y_test):
     return metrics.auc(fpr, tpr)
 
 
-# TODO only accepts model, if all hidden layers have the same dimension????
 def get_shap_values(model, X_train, X_test, feature_names,
                     train_sample_size=1000, test_sample_size=300, device="cpu"):
     """
-    TODO
+    Creates a dataframe of shap values for model, given train and testing parameters
+
+    Args:
+        model (torch.model): The trained pytorch model
+        X_train (numpy.ndarray): Training Features
+        X_test (numpy.ndarray): Testing features
+        feature_names (list): Names of each feature for printing
+        train_sample_sie (int): Size of training samples for SHAP calculation
+        test_sample_sie (int): Size of testing samples for SHAP calculation
+        device (string): cpu/gpu
+    Returns:
+        (pd.DataFrame): dataframe containing the shap values
     """
 
     train_sample_size = min(train_sample_size, X_train.shape[0])

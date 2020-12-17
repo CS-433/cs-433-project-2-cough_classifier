@@ -489,7 +489,7 @@ def cross_validation_nn(X,
                                             # transform to dictionary
                                             gs_df = pd.DataFrame.from_dict(gs_dic)
                                             # save dictionary
-                                            gs_df.to_pickle(GS_DIR + "/" + "grid_search_df_" + segmentation_type + "_uses_user_features_" + str(using_user_features) + "_" + type_of_data + "_" + start_time + ".pkl")
+                                            gs_df.to_pickle(GS_DIR + "/" + segmentation_type + "_gs.pkl")
 
 ################################################################################
 ################################################################################
@@ -520,11 +520,11 @@ def predict_test_results():
 
 
         # preprocess it
-        X = preprocessing_pipeline(X)
+        X = preprocessing_pipeline(X, drop_corr=False)
 
         # make predictions
         predictions = predict(X.values, model)
-        print(predictions)
+
         # save predictions
         create_csv_submission(predictions, segm_type=segmentation, submission_path=PREDICTION_DATA + "/predictions_deep",
                               expert=False, user_features=True)
@@ -557,7 +557,7 @@ def train_best_models():
         subject_indices = [l[0] for l in list(features.index)]
 
         # preprocess our features
-        features = preprocessing_pipeline(features)
+        features = preprocessing_pipeline(features, drop_corr=False)
 
         # train a model
         model = train_model(features.values,
@@ -607,7 +607,7 @@ def grid_search():
         subject_indices = [l[0] for l in list(features.index)]
 
         # preprocess our features
-        features = preprocessing_pipeline(features)
+        features = preprocessing_pipeline(features, drop_corr=False)
 
         # cross validation
         cross_validation_nn(features.values, labels.values, subject_indices,
@@ -656,7 +656,7 @@ def train_test():
         subject_indices = [l[0] for l in list(features.index)]
 
         # preprocess our features
-        features = preprocessing_pipeline(features)
+        features = preprocessing_pipeline(features, drop_corr=False)
 
         # split them into train and test according to the groups
         gss = GroupShuffleSplit(n_splits=1, train_size=0.7, random_state=SEED)
@@ -696,4 +696,4 @@ if __name__=="__main__":
     elif len(sys.argv) == 5 and sys.argv[1] == "grid_search":
         grid_search()
     else:
-        print("not possible")
+        print("Not possible, check README for specific execution instructions!")
