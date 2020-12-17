@@ -3,7 +3,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from src.utils.get_data import import_data
-from src.utils.preprocessing import classic_preprocessing
+from src.utils.preprocessing import preprocessing_pipeline
 from src.utils.train import train_predict, train_predict_experts
 from src.utils.utils import create_csv_submission
 
@@ -90,7 +90,7 @@ if __name__ == "__main__":
                            drop_expert=True,
                            is_test=True)
 
-        X_tr, X_te = classic_preprocessing(X_tr, X_te)
+        X_tr, X_te = preprocessing_pipeline(X_tr, X_te)
 
         y_pred = train_predict(X_tr, y_tr, X_te, param=param)
         create_csv_submission(y_pred, segm_type=segm_type, submission_path=SUBMISSION_PATH,
@@ -107,7 +107,7 @@ if __name__ == "__main__":
                            drop_expert=True,
                            is_test=True)
 
-        X_tr, X_te = classic_preprocessing(X_tr, X_te, dummy=False)
+        X_tr, X_te = preprocessing_pipeline(X_tr, X_te, dummy=False)
 
         y_pred = train_predict(X_tr, y_tr, X_te, param=param)
         create_csv_submission(y_pred, segm_type=segm_type, submission_path=SUBMISSION_PATH,
@@ -127,7 +127,7 @@ if __name__ == "__main__":
         expert_col = X_tr['Expert'].values
         X_tr.drop(['Expert'], axis=1, inplace=True)
 
-        X_tr, X_te = classic_preprocessing(X_tr, X_te, stop=None, dummy=False)
+        X_tr, X_te = preprocessing_pipeline(X_tr, X_te, stop=None, dummy=False)
 
         if ENSEMBLE_TYPE == "weighted":
             param["ensemble"] = {
