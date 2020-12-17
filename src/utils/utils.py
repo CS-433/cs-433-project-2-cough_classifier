@@ -83,8 +83,7 @@ def get_shap_values(model, X_train, X_test, feature_names,
     # generate the shap values
     shap_values = de.shap_values(test_samples)
 
-    # create a data frame with the absolute mean, std and names of the shap
-    # values
+    # create a data frame with the absolute mean, std and names of the shap values
     shap_df = pd.DataFrame({
         "mean_abs_shap": np.mean(np.abs(shap_values), axis=0),
         "stdev_abs_shap": np.std(np.abs(shap_values), axis=0),

@@ -169,7 +169,7 @@ def ensemble_predictions(members, X_te, params):
     else:
         estimators = [(f'expert_{i}', members[i]) for i in range(len(members))]
 
-        # TODO: correct -> only final estimator should be fitted here
+        # only final estimator should be fitted here
         clf = StackingClassifier(
             estimators=estimators, final_estimator=LogisticRegression())
         X_tr = params["X_tr"]

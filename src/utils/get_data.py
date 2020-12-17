@@ -84,14 +84,13 @@ def create_multi_index(data):
     return data
 
 
-# TODO: simplify split function
 def split_experts(X, y):
     """
     Import data
-    :param X: traning data
-    :type X: pd.Dataframe
+    :param X: training data
+    :type X: pd.DataFrame
     :param y: labels
-    :type y: pd.Dataframe
+    :type y: pd.DataFrame
     :return: split data and labels for each expert
     """
     merged = X.merge(y, left_index=True, right_index=True)
@@ -138,7 +137,6 @@ def get_subjects_indices(subject_names):
     unique_subject_names_dict = {s: index for index, s in enumerate(np.unique(subject_names))}
 
     # return the corresponding group index
-    # TODO: find out why not sorted
     return [unique_subject_names_dict[s] for s in subject_names]
 
 

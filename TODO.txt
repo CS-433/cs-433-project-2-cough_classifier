@@ -1,4 +1,0 @@
-1) Shap Values: The function "get_shap_values" in utils only accepts models if the hidden layer dimensions are all equal
-2) ERROR: Sometime in trainng, this results in nan for AUC (AUC ERROR)
-/home/dcelik/.virtualenvs/ml/lib/python3.8/site-packages/sklearn/metrics/_ranking.py:803: UndefinedMetricWarning: No negative samples in y_true, false positive value should be meaningless
-  warnings.warn("No negative samples in y_true, "
