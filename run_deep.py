@@ -533,6 +533,10 @@ def predict_test_results():
 
 
 def train_best_models():
+    """
+    Trains the best models using grid search results in "models/grid_search_results"
+    and saves them in "models/weights"
+    """
     segmentation_types = ["no", "coarse", "fine"]
     gs_paths = ["no_gs.pkl", "coarse_gs.pkl", "fine_gs.pkl"]
     for segmentation, path in zip(segmentation_types, gs_paths):
