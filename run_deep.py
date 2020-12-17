@@ -16,10 +16,9 @@ import torch.optim as optim
 from src.models.model import BinaryClassification
 from src.utils.utils import binary_acc, area_under_the_curve, get_shap_values, create_csv_submission
 from src.utils.get_data import import_data, get_data_loader, split_experts
-from src.utils.preprocessing import standardize
 from src.utils.config import SEED
 from src.utils.model_helpers import weight_reset
-from src.utils.preprocessing import standard_preprocessing
+from src.utils.preprocessing import preprocessing_pipeline
 from src.utils.feature_engineering import feature_engineering
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -56,8 +55,8 @@ def train_model(X_train,
         y_train (np.array): training labels
         model (string): type of model; currently implemented: ["binary"]
         criterion (string): loss function; currently implemented: ["BCE"]
-        optimizer (string): optimizer; currently impelmented: ["Adam"]
-        smote (bool): whether to performe SMOTE class equalization
+        optimizer (string): optimizer; currently implemented: ["Adam"]
+        smote (bool): whether to perform SMOTE class equalization
         activation_function (string): which activation function; currently
                                             implemented: ["relu"]
         batch_size (int): size of training batches
@@ -99,6 +98,9 @@ def train_model(X_train,
     val_loader = get_data_loader(X_val, y_val, X_val.shape[0])
 
     # initiate the correct model
+
+    assert model in "binary", "Model not implemented yet!"
+
     if model == "binary":
         model = BinaryClassification([X_train.shape[1], *hidden_layer_dims, 1],
                                      dropout=dropout,
@@ -654,7 +656,7 @@ def train_test():
         subject_indices = [l[0] for l in list(features.index)]
 
         # preprocess our features
-        features, labels = standard_preprocessing(features, labels, do_smote=False)
+        features = preprocessing_pipeline(X_tr=features)
         # apply feature engineering
         #features, labels = feature_engineering(features, labels)
 

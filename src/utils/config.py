@@ -25,7 +25,7 @@ ALL_FEATURES_FINE = FEATURES['EEPD'] + ['Zero_Crossing_Rate', 'RMS_Power', 'Domi
 ALL_FEATURES_NO = FEATURES['EEPD'] + ['Zero_Crossing_Rate', 'RMS_Power', 'Dominant_Freq'] + FEATURES['SPECTRAL'] + \
                   FEATURES['MFCC'] + ['Crest_Factor', 'Cough_Length', 'SNR'] + FEATURES['PSD'] + ['Expert'] + \
                   FEATURES['METADATA']
-CATEGORICAL_COLS = ['Expert', 'Age', 'Gender', 'Resp_Condition', 'Symptoms']
+CATEGORICAL_COLS = ['Expert', 'Gender', 'Resp_Condition', 'Symptoms']
 
 
 SEED = 42

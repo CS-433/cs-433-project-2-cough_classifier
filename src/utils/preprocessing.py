@@ -4,8 +4,8 @@ from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
 
 
-def classic_preprocessing(X_tr, X_te=None, start=0, stop=-3, thresh=0.95, norm=True,
-                          dummy=True, drop_corr=True):
+def preprocessing_pipeline(X_tr, X_te=None, start=None, stop=-3, thresh=0.95, norm=True,
+                           dummy=True, drop_corr=True):
     """
     Do all the preprocessing at once
     :param X_tr: dataframe
@@ -36,9 +36,12 @@ def classic_preprocessing(X_tr, X_te=None, start=0, stop=-3, thresh=0.95, norm=T
         else:
             X_tr = standardize(X_tr, idx_start=start, idx_end=stop)
     if dummy:
-        X_tr = dummy_code(X_tr, columns=['Gender', 'Resp_Condition', 'Symptoms'])
+        categorical_cols = ['Gender', 'Resp_Condition', 'Symptoms']
+        dummy_features = [feat for feat in categorical_cols if feat in X_tr.columns]
+
+        X_tr = dummy_code(X_tr, columns=dummy_features)
         if X_te is not None:
-            X_te = dummy_code(X_te, columns=['Gender', 'Resp_Condition', 'Symptoms'])
+            X_te = dummy_code(X_te, columns=dummy_features)
     if drop_corr:
         if X_te is not None:
             X_tr, X_te = remove_correlated_features(X_tr, X_te=X_te, threshold=thresh)
@@ -49,41 +52,6 @@ def classic_preprocessing(X_tr, X_te=None, start=0, stop=-3, thresh=0.95, norm=T
         return X_tr, X_te
 
     return X_tr
-
-
-def standard_preprocessing(samples, labels, do_standardize=True,
-                           do_smote=True, do_dummy_coding=True,
-                           categorical_features=('Gender', 'Resp_Condition', 'Symptoms')):
-    """
-    Do all the standard preprocessing at once
-    :param samples: dataframe
-    :type samples: pd.DataFrame
-    :param labels: test data
-    :type labels: pd.DataFrame
-    :param do_standardize: do standardisation
-    :type do_standardize: boolean
-    :param do_smote: do oversampling with SMOTE
-    :type do_smote: boolean
-    :param do_dummy_coding: do dummy coding
-    :type do_dummy_coding: boolean
-    :param categorical_features: features to dummy code
-    :type categorical_features: list
-    :return: preprocessed dataframe
-    """
-    if do_standardize:
-        # standardize all non categorical features
-        samples = standardize(samples, None, 0, -len(categorical_features))
-
-    if do_dummy_coding:
-        # dummy coding
-        samples = dummy_code(samples, columns=[feat for feat in categorical_features if feat in samples.columns])
-
-    if do_smote:
-        # smote
-        # TODO smote might change dummy coding, i.e., make it continuous
-        samples, labels = oversample(samples, labels)
-
-    return samples, labels
 
 
 def standardize(X_tr, X_te=None, idx_start=0, idx_end=None):
