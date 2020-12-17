@@ -557,7 +557,7 @@ def train_best_models():
         subject_indices = [l[0] for l in list(features.index)]
 
         # preprocess our features
-        features = preprocessing_pipeline(features, labels)
+        features = preprocessing_pipeline(features)
 
         # train a model
         model = train_model(features.values,
@@ -607,7 +607,7 @@ def grid_search():
         subject_indices = [l[0] for l in list(features.index)]
 
         # preprocess our features
-        features = preprocessing_pipeline(features, labels)
+        features = preprocessing_pipeline(features)
 
         # cross validation
         cross_validation_nn(features.values, labels.values, subject_indices,
@@ -656,7 +656,7 @@ def train_test():
         subject_indices = [l[0] for l in list(features.index)]
 
         # preprocess our features
-        features = preprocessing_pipeline(X_tr=features)
+        features = preprocessing_pipeline(features)
 
         # split them into train and test according to the groups
         gss = GroupShuffleSplit(n_splits=1, train_size=0.7, random_state=SEED)
@@ -684,6 +684,7 @@ def train_test():
         test_model(features.values[test_idx], labels.values[test_idx], model, verbose=True)
 
 if __name__=="__main__":
+    print(sys.argv)
     if len(sys.argv) == 1:
         train_test()
     elif len(sys.argv) == 2 and sys.argv[1] == "make_predictions":

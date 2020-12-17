@@ -83,11 +83,12 @@ $ python3 run_deep.py
 
 ###### Specified Train-Test Run
 ```bash
-$ python3 run_deep.py train_test arg1 arg2
+$ python3 run_deep.py train_test segmentation_type arg1 arg2
 ```
 
 where
 
+* `segmentation_type` (string): is either `no`, `coarse`, `fine`
 * `arg1` (boolean): if `True` one model is trained for each expert. Otherwise, if `False`, one model is trained for the
   whole dataset.
 * `arg2` (boolean): if `True` the user metadata is dropped and not used. Otherwise, if `False`, the model makes use of
@@ -113,11 +114,12 @@ $ ./run_deep_all.sh
 
 ###### Specified Grid Search
 ```bash
-$ python3 run_deep.py grid_search arg1 arg2
+$ python3 run_deep.py grid_search segmentation_type arg1 arg2
 ```
 
 where
 
+* `segmentation_type` (string): is either `no`, `coarse`, `fine`
 * `arg1` (boolean): if `True` one model is trained for each expert. Otherwise, if `False`, one model is trained for the
   whole dataset.
 * `arg2` (boolean): if `True` the user metadata is dropped and not used. Otherwise, if `False`, the model makes use of
