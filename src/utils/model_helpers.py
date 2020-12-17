@@ -91,7 +91,6 @@ def cross_val_w_oversampling(X, y, k, model, oversampling=True, metrics=[f1_scor
 
         if oversampling:
             X_tr, y_tr = oversample(X_tr, y_tr)
-            # X_te, y_te = oversample(X_te, y_te)
 
         k_fit = model.fit(X_tr, y_tr)
         y_pred = k_fit.predict(X_te)
@@ -100,6 +99,8 @@ def cross_val_w_oversampling(X, y, k, model, oversampling=True, metrics=[f1_scor
 
     for metric in metrics:
         return_dict[metric.__name__] = float(np.mean(metric_dict[metric.__name__]))
+        if metric.__name__ == 'roc_auc_score':
+            return_dict[metric.__name__ + '_var'] = float(np.var(metric_dict[metric.__name__]))
 
     return return_dict
 
@@ -133,7 +134,7 @@ def roc_w_cross_val(X, y, classifier, plot=False):
     ax.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r',
             label='Chance', alpha=.8)
     ax.plot(mean_fpr, mean_tpr, color='b',
-            label=r'Mean ROC (AUC = %0.2f $\pm$ %0.2f)' % (mean_auc, std_auc),
+            label=r'Mean ROC (AUC = %0.2f $\pm$ %0.2f)' % (mean_auc, float(std_auc)),
             lw=2, alpha=.8)
 
     std_tpr = np.std(tprs, axis=0)
@@ -147,10 +148,10 @@ def roc_w_cross_val(X, y, classifier, plot=False):
     # ax.legend(loc="lower right")
     ax.legend(bbox_to_anchor=(1, 0), loc="lower left")
 
-    if not plot:
-        plt.close()
-    else:
+    if plot:
         plt.show()
+    else:
+        plt.close()
 
     return mean_auc
 
@@ -168,7 +169,7 @@ def ensemble_predictions(members, X_te, params):
     else:
         estimators = [(f'expert_{i}', members[i]) for i in range(len(members))]
 
-        # TODO: correct bug -> only final estimator should be fitted here
+        # TODO: correct -> only final estimator should be fitted here
         clf = StackingClassifier(
             estimators=estimators, final_estimator=LogisticRegression())
         X_tr = params["X_tr"]

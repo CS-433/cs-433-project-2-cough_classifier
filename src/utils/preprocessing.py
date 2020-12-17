@@ -4,7 +4,8 @@ from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
 
 
-def classic_preprocessing(X_tr, X_te=None, start=0, stop=-3, thresh=0.95, norm=True, dummy=True, drop_corr=True):
+def classic_preprocessing(X_tr, X_te=None, start=0, stop=-3, thresh=0.95, norm=True,
+                          dummy=True, drop_corr=True):
     """
     Do all the preprocessing at once
     :param X_tr: dataframe
@@ -16,7 +17,7 @@ def classic_preprocessing(X_tr, X_te=None, start=0, stop=-3, thresh=0.95, norm=T
     :param stop: end index
     :type stop: int
     :param thresh: threshold for correlation
-    :type X_te: float
+    :type thresh: float
     :param norm: do normalisation
     :type norm: boolean
     :param dummy: do dummy coding
@@ -25,6 +26,10 @@ def classic_preprocessing(X_tr, X_te=None, start=0, stop=-3, thresh=0.95, norm=T
     :type drop_corr: boolean
     :return: preprocessed dataframe
     """
+
+    # shuffle rows
+    X_tr.sample(frac=1, replace=False)
+
     if norm:
         if X_te is not None:
             X_tr, X_te = standardize(X_tr, X_te, idx_start=start, idx_end=stop)
@@ -36,7 +41,7 @@ def classic_preprocessing(X_tr, X_te=None, start=0, stop=-3, thresh=0.95, norm=T
             X_te = dummy_code(X_te, columns=['Gender', 'Resp_Condition', 'Symptoms'])
     if drop_corr:
         if X_te is not None:
-            X_tr, X_te = remove_correlated_features(X_tr, X_te, threshold=thresh)
+            X_tr, X_te = remove_correlated_features(X_tr, X_te=X_te, threshold=thresh)
         else:
             X_tr = remove_correlated_features(X_tr, threshold=thresh)
 
@@ -92,16 +97,15 @@ def standardize(X_tr, X_te=None, idx_start=0, idx_end=None):
     :type idx_end: int
     :return: dataframe with standardized columns
     """
-    # Standardize the specified columns
+    scaler = StandardScaler()
     if isinstance(X_tr, np.ndarray):
-        scaler = StandardScaler()
         X_tr = scaler.fit_transform(X_tr)
         if X_te is not None:
             X_te = scaler.transform(X_te)
             return X_tr, X_te
         return X_tr
 
-    scaler = StandardScaler()
+    # if data is in a dataframe
     X_tr.iloc[:, idx_start:idx_end] = scaler.fit_transform(X_tr.iloc[:, idx_start:idx_end])
     if X_te is not None:
         X_te.iloc[:, idx_start:idx_end] = scaler.transform(X_te.iloc[:, idx_start:idx_end])
@@ -151,7 +155,7 @@ def remove_correlated_features(X_tr, X_te=None, threshold=0.95, verbose=False):
     :param X_te: test data
     :type X_te: pd.DataFrame
     :param threshold: threshold for correlation
-    :type X_te: float
+    :type threshold: float
     :param verbose: print removed features
     :type verbose: boolean
     :return: dataframe with correlated features removed
