@@ -9,8 +9,8 @@ from src.utils.utils import create_csv_submission
 
 # BEST MODEL PARAMETERS
 BEST_PARAMS_NO_METADATA = {
-    'coarse': {'model': Lda(), 'oversampling': True},
-    'fine': {'model': KNeighborsClassifier(n_neighbors=4), 'oversampling': True},
+    'coarse': {'model': SVC(kernel='linear', gamma=0.01, probability=True), 'oversampling': True},
+    'fine': {'model': KNeighborsClassifier(n_neighbors=1), 'oversampling': True},
     'no': {'model': GaussianNB(), 'oversampling': True}
 }
 
@@ -42,9 +42,9 @@ BEST_PARAMS_EXPERTS_NO_METADATA = {
 }
 
 BEST_PARAMS_WITH_METADATA = {
-    'coarse': {'model': KNeighborsClassifier(n_neighbors=4), 'oversampling': True},
-    'fine': {'model': KNeighborsClassifier(n_neighbors=4), 'oversampling': True},
-    'no': {'model': Lda(), 'oversampling': True}
+    'coarse': {'model': KNeighborsClassifier(n_neighbors=1), 'oversampling': True},
+    'fine': {'model': KNeighborsClassifier(n_neighbors=1), 'oversampling': True},
+    'no': {'model': GaussianNB(), 'oversampling': True}
 }
 
 BEST_PARAMS_EXPERTS_WITH_METADATA = {
