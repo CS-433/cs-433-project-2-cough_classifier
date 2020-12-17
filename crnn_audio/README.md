@@ -1,27 +1,29 @@
-
-
 # PyTorch Audio Classification
 
 Classification of audio with variable length using a CNN + LSTM architecture.
 
-**DISCLAIMER**: This model architecture and codebase is based on the work of Kiran Sanjeevan and Tony Hung, see the [original repository](https://github.com/ksanjeevan/crnn-audio-classification).
-In their work, the model was created to classify sounds on the [UrbanSound8K](https://urbansounddataset.weebly.com/urbansound8k.html) dataset, a well-known dataset containing labeled sound excerpts (<=4s) of urban sounds.
-The repository was released under the MIT license, allowing us to freely modify and distribute the original code (see [license](https://github.com/ksanjeevan/crnn-audio-classification/blob/master/LICENSE)).
+**DISCLAIMER**: This model architecture and codebase is based on the work of Kiran Sanjeevan and Tony Hung, see
+the [original repository](https://github.com/ksanjeevan/crnn-audio-classification). In their work, the model was created
+to classify sounds on the [UrbanSound8K](https://urbansounddataset.weebly.com/urbansound8k.html) dataset, a well-known
+dataset containing labeled sound excerpts (<=4s) of urban sounds. The repository was released under the MIT license,
+allowing us to freely modify and distribute the original code (
+see [license](https://github.com/ksanjeevan/crnn-audio-classification/blob/master/LICENSE)).
 
 #### Dependencies
 
-- [soundfile](https://pypi.org/project/SoundFile/): audio loading
-- [torchparse](https://github.com/ksanjeevan/torchparse): .cfg easy model definition
-- [pytorch/audio](https://github.com/pytorch/audio): Audio transforms 
-
+* [soundfile](https://pypi.org/project/SoundFile/): audio loading
+* [torchparse](https://github.com/ksanjeevan/torchparse): .cfg easy model definition
+* [pytorch/audio](https://github.com/pytorch/audio): Audio transforms
 
 #### Features
-- Easily define CRNN in .cfg format
-- Spectrogram computation on GPU
-- Audio data augmentation: Cropping, White Noise, Time Stretching (using phase vocoder on GPU!)
 
+* Easily define CRNN in .cfg format
+* Spectrogram computation on GPU
+* Audio data augmentation: Cropping, White Noise, Time Stretching (using phase vocoder on GPU!)
 
-### Models
+### Model
+
+![Model architecture](figures/arch.png)
 
 Printing model defined with [torchparse](https://github.com/ksanjeevan/torchparse):
 
@@ -60,16 +62,19 @@ Trainable parameters: 139786
 ### Usage
 
 #### Training
+
 ```bash
 ./run_lstm_raw_audio.py train -c config.json --cfg crnn.cfg
 ```
 
 #### Evaluation
+
 ```bash
 ./run_lstm_raw_audio.py eval -r /path/to/saved/model.pth
 ```
 
 #### Inference
+
 Run inference on an audio file:
 
 ```bash
@@ -77,6 +82,7 @@ Run inference on an audio file:
 ```
 
 ##### Augmentation
+
 Dataset transforms:
 
 ```bash
