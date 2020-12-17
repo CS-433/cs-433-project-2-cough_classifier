@@ -77,11 +77,16 @@ The test results are automatically saved in the folder `data/test/predictions_cl
 ##### ANN Approach
 
 ###### Default Train-Test Run
+
+For simple train-test functionality run, on default parameters and a default
+segmentation type `coarse`, simply execute:
+
 ```bash
 $ python3 run_deep.py
 ```
 
 ###### Specified Train-Test Run
+If one is interested in specifying the segmentation type and further specifications, run:
 ```bash
 $ python3 run_deep.py train_test segmentation_type arg1 arg2
 ```
@@ -113,6 +118,7 @@ $ ./run_deep_all.sh
 ```
 
 ###### Specified Grid Search
+If one is interested in a particular grid search data setup, one can run the following:
 ```bash
 $ python3 run_deep.py grid_search segmentation_type arg1 arg2
 ```
@@ -132,7 +138,7 @@ This script will generate pickle files in `models/grid_search_results` that are 
 $ python3 run_deep.py train_best_models
 ```
 
-This script will generate PyTorch models and save them in `models/weights`.
+This script will generate PyTorch models and save them in `models/weights` and are necessary for generating test predictions.
 
 ###### Generating Test Predictions
 ```bash
