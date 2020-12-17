@@ -520,11 +520,11 @@ def predict_test_results():
 
 
         # preprocess it
-        X, _ = standard_preprocessing(X, None, do_smote=False)
+        X = preprocessing_pipeline(X)
 
         # make predictions
         predictions = predict(X.values, model)
-
+        print(predictions)
         # save predictions
         create_csv_submission(predictions, segm_type=segmentation, submission_path=PREDICTION_DATA + "/predictions_deep",
                               expert=False, user_features=True)
@@ -557,9 +557,7 @@ def train_best_models():
         subject_indices = [l[0] for l in list(features.index)]
 
         # preprocess our features
-        features, labels = standard_preprocessing(features, labels, do_smote=False)
-        # apply feature engineering TODO
-        #features, labels = feature_engineering(features, labels)
+        features = preprocessing_pipeline(features, labels)
 
         # train a model
         model = train_model(features.values,
@@ -609,9 +607,7 @@ def grid_search():
         subject_indices = [l[0] for l in list(features.index)]
 
         # preprocess our features
-        features, labels = standard_preprocessing(features, labels, do_smote=False)
-        # apply feature engineering
-        #features, labels = feature_engineering(features, labels)
+        features = preprocessing_pipeline(features, labels)
 
         # cross validation
         cross_validation_nn(features.values, labels.values, subject_indices,
@@ -661,8 +657,6 @@ def train_test():
 
         # preprocess our features
         features = preprocessing_pipeline(X_tr=features)
-        # apply feature engineering
-        #features, labels = feature_engineering(features, labels)
 
         # split them into train and test according to the groups
         gss = GroupShuffleSplit(n_splits=1, train_size=0.7, random_state=SEED)
